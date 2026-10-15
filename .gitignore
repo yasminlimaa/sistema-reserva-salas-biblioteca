@@ -1,0 +1,28 @@
+# Arquivos locais do sistema operacional
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+
+# Dependências instaladas e arquivos gerados
+node_modules/
+dist/
+build/
+coverage/
+.nyc_output/
+.cache/
+*.tsbuildinfo
+
+# Configurações locais e segredos (preservar modelos sem credenciais)
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Logs e arquivos temporários
+*.log
+*.pid
+*.pid.lock
+*.swp
+*.swo
+*~
