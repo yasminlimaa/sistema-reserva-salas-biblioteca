@@ -1,6 +1,8 @@
 /** @format */
 
 const amqp = require("amqplib");
+// O padrão utilizado é o Publish/Subscribe
+// Este arquivo representa o serviço de notificações onde irá receber o evento enviado pelo middleware (RabbitMQ)
 
 async function main() {
   const connection = await amqp.connect("amqp://localhost");

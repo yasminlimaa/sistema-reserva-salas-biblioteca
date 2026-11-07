@@ -2,6 +2,8 @@
 
 const amqp = require("amqplib");
 
+// Este arquivo representa o serviço de reservas onde irá publicar um evento dizendo "reserva confirmada"
+
 async function main() {
   const connection = await amqp.connect("amqp://localhost");
   const channel = await connection.createChannel();
@@ -20,7 +22,7 @@ async function main() {
   const buffer = Buffer.from(eventText);
 
   channel.publish(exchange, "", buffer);
-  console.log("Publicação solicitada: ", buffer);
+  console.log("Publicação solicitada: ", eventText);
 
   setTimeout(() => {
     connection.close().catch((error) => {
