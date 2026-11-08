@@ -1,0 +1,159 @@
+.participantes-pagina {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  max-width: 900px;
+  gap: 16px;
+}
+
+.reserva-etapas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 4px;
+  padding: 0;
+  list-style: none;
+}
+
+.reserva-etapas li {
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: #e5e8e1;
+  color: var(--texto-suave);
+  font-size: 11px;
+}
+
+.reserva-etapas .concluida { color: var(--verde); background: #e6f0ec; }
+.reserva-etapas .atual { color: #fff; background: var(--verde-escuro); font-weight: 600; }
+
+.participantes-cabecalho h1 { font-size: 30px; letter-spacing: -0.02em; }
+.participantes-cabecalho p { margin-top: 6px; color: var(--texto-suave); font-size: 14px; }
+
+.participantes-card,
+.resumo-reserva {
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  background: var(--branco);
+  padding: 18px 20px;
+}
+
+.card-linha-titulo,
+.participante,
+.resultado-discente {
+  display: flex;
+  align-items: center;
+}
+
+.card-linha-titulo { justify-content: space-between; gap: 12px; font-size: 13px; }
+.grupo-status { color: #9a6114; font-size: 11px; font-weight: 600; }
+.grupo-status.completo { color: var(--verde); }
+
+.progresso-grupo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 10px 0 4px; }
+.progresso-grupo i { height: 4px; border-radius: 999px; background: #dfe3dc; }
+.progresso-grupo i.preenchido { background: var(--verde); }
+
+.lista-participantes { display: grid; }
+.participante,
+.resultado-discente { gap: 10px; min-height: 50px; border-top: 1px solid #edf0eb; padding: 8px 0; }
+.participante > div,
+.resultado-discente > div { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.participante strong,
+.resultado-discente strong { overflow-wrap: anywhere; font-size: 13px; }
+.participante small,
+.resultado-discente small { color: var(--texto-suave); font-size: 11px; }
+.participante-avatar { display: grid; flex: 0 0 28px; width: 28px; height: 28px; place-items: center; border-radius: 50%; background: #e6f0ec; color: var(--verde); font-size: 10px; font-weight: 600; }
+.selo-responsavel { margin-left: auto; border-radius: 999px; padding: 3px 7px; background: var(--verde-escuro); color: #fff; font-size: 10px; }
+.botao-texto,
+.botao-contorno { margin-left: auto; border: 0; background: transparent; color: var(--verde); font: inherit; font-size: 11px; cursor: pointer; }
+.botao-contorno { border: 1px solid var(--verde); border-radius: 6px; padding: 6px 10px; font-weight: 600; }
+
+.adicionar-card { display: grid; gap: 10px; }
+.adicionar-card > label { font-size: 13px; font-weight: 600; }
+.campo-busca { display: flex; min-width: 0; align-items: center; gap: 8px; border: 1px solid var(--verde); border-radius: 8px; padding: 0 10px; }
+.campo-busca span { color: var(--texto-suave); }
+.campo-busca input { width: 100%; min-width: 0; height: 42px; border: 0; outline: 0; background: transparent; font: inherit; font-size: 13px; }
+.resultados-busca { display: grid; }
+.busca-vazia { margin: 6px 0 0; color: var(--texto-suave); font-size: 13px; }
+
+.resumo-reserva { display: grid; gap: 8px; border: 0; background: var(--verde-escuro); color: #eef1ec; padding: 22px 24px; }
+.resumo-rotulo { color: #8fa198; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.resumo-reserva h2 { font-size: 24px; }
+.resumo-reserva > p { color: #b9c4bd; font-size: 12px; }
+.resumo-reserva dl { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 24px; margin: 8px 0; }
+.resumo-reserva dl div { display: grid; gap: 2px; }
+.resumo-reserva dt { color: #8fa198; font-size: 10px; }
+.resumo-reserva dd { margin: 0; font-size: 12px; }
+.resumo-reserva .btn-primary { margin-top: 2px; height: 44px; font-size: 13px; }
+.aviso-grupo { border-radius: 6px; background: #fbeccb; color: #8a5a12 !important; padding: 7px 10px; text-align: center; }
+.erro-reserva { border-radius: 6px; background: #fdecea; color: var(--erro) !important; padding: 8px 10px; }
+.trocar-reserva { justify-self: center; color: #a7f3d0; }
+.trocar-reserva:hover { color: #d1fae5; }
+.trocar-reserva:focus-visible { outline: 2px solid #a7f3d0; outline-offset: 3px; }
+
+@media (max-width: 800px) {
+  .participantes-pagina,
+  .participantes-card,
+  .resumo-reserva,
+  .resultados-busca,
+  .lista-participantes {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .participantes-pagina {
+    overflow: visible;
+  }
+
+  .participantes-cabecalho h1 { font-size: 26px; }
+  .participantes-card,
+  .resumo-reserva { padding: 16px; }
+
+  .card-linha-titulo {
+    flex-wrap: wrap;
+  }
+
+  .participante,
+  .resultado-discente {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    align-items: start;
+    column-gap: 10px;
+    row-gap: 8px;
+    min-width: 0;
+    padding: 12px 0;
+  }
+
+  .participante-avatar {
+    grid-row: 1;
+  }
+
+  .participante > div,
+  .resultado-discente > div {
+    width: 100%;
+  }
+
+  .selo-responsavel,
+  .botao-texto,
+  .botao-contorno {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-self: stretch;
+    margin-left: 0;
+    min-height: 44px;
+    padding: 0 12px;
+  }
+
+  .selo-responsavel {
+    display: inline-grid;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+  }
+
+  .botao-texto {
+    text-align: right;
+  }
+
+  .resumo-reserva dl { grid-template-columns: 1fr; gap: 8px; }
+  .resumo-reserva dd { overflow-wrap: anywhere; }
+}

@@ -4,6 +4,8 @@ import CadastroForm from './components/CadastroForm.jsx'
 import MenuLateral from './components/MenuLateral.jsx'
 import Inicio from './pages/Inicio.jsx'
 import Disponibilidade from './pages/Disponibilidade.jsx'
+import Participantes from './pages/Participantes.jsx'
+import MinhasReservas from './pages/MinhasReservas.jsx'
 import { authService } from './services/auth/index.js'
 import { contarAvisosNaoLidos } from './services/reservas/index.js'
 import './layout.css'
@@ -14,6 +16,8 @@ export default function App() {
   const [perfilCadastro, setPerfilCadastro] = useState('discente')
   const [pagina, setPagina] = useState('inicio')
   const [naoLidos, setNaoLidos] = useState(0)
+  const [rascunhoReserva, setRascunhoReserva] = useState(null)
+  const [mensagemSucesso, setMensagemSucesso] = useState('')
 
   useEffect(() => {
     if (!usuario) return
@@ -29,6 +33,8 @@ export default function App() {
       setUsuario(null)
       setTela('login')
       setPagina('inicio')
+      setRascunhoReserva(null)
+      setMensagemSucesso('')
     }
   }
 
@@ -43,9 +49,38 @@ export default function App() {
           sair={sair}
         />
         <main className="layout-conteudo">
-          {pagina === 'disponibilidade'
-            ? <Disponibilidade />
-            : <Inicio usuario={usuario} irPara={setPagina} />}
+          {pagina === 'disponibilidade' && (
+            <Disponibilidade
+              selecaoInicial={rascunhoReserva}
+              onAvancar={(selecao) => {
+                setRascunhoReserva(selecao)
+                setPagina('participantes')
+              }}
+            />
+          )}
+          {pagina === 'participantes' && rascunhoReserva && (
+            <Participantes
+              usuario={usuario}
+              reserva={rascunhoReserva}
+              onVoltar={() => setPagina('disponibilidade')}
+              onConfirmar={() => {
+                setRascunhoReserva(null)
+                setMensagemSucesso('Reserva de demonstração local confirmada. Ela foi salva somente neste navegador.')
+                setPagina('inicio')
+              }}
+            />
+          )}
+          {pagina === 'minhas' && <MinhasReservas usuario={usuario} irPara={setPagina} />}
+          {pagina !== 'disponibilidade' && pagina !== 'participantes' && pagina !== 'minhas' && (
+            <Inicio
+              usuario={usuario}
+              irPara={(destino) => {
+                setMensagemSucesso('')
+                setPagina(destino)
+              }}
+              mensagemSucesso={mensagemSucesso}
+            />
+          )}
         </main>
       </div>
     )

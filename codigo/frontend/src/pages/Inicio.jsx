@@ -3,7 +3,7 @@ import './Inicio.css'
 import { dataDe, formatarData, formatarDataHora, horaDe, situacaoReserva } from '../lib/datas.js'
 import { listarAvisos, listarReservas } from '../services/reservas/index.js'
 
-export default function Inicio({ usuario, irPara }) {
+export default function Inicio({ usuario, irPara, mensagemSucesso }) {
   const tipo = usuario.perfil === 'funcionario' ? 'Funcionário' : 'Discente'
   const [reservas, setReservas] = useState(null)
   const [avisos, setAvisos] = useState(null)
@@ -20,6 +20,8 @@ export default function Inicio({ usuario, irPara }) {
       <span className="inicio-tipo">{tipo}</span>
       <h1>{usuario.nome ? `Olá, ${usuario.nome}` : 'Olá!'}</h1>
       <p>O que você quer fazer hoje?</p>
+
+      {mensagemSucesso && <p className="inicio-sucesso" role="status">{mensagemSucesso}</p>}
 
       <div className="inicio-atalhos">
         <button type="button" className="inicio-atalho" onClick={() => irPara('disponibilidade')}>
