@@ -1,0 +1,83 @@
+.inicio {
+  min-height: 100vh;
+  background: var(--fundo);
+  display: flex;
+  flex-direction: column;
+}
+
+.inicio-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  background: var(--branco);
+  border-bottom: 1px solid var(--borda);
+  padding: 14px 24px;
+}
+
+.inicio-marca strong {
+  display: block;
+  font-size: 14px;
+  color: var(--verde-escuro);
+}
+
+.inicio-marca small {
+  display: block;
+  font-size: 11px;
+  color: var(--texto-suave);
+}
+
+.inicio-sair {
+  height: 40px;
+  padding: 0 18px;
+  border: 1px solid var(--verde);
+  border-radius: var(--raio);
+  background: var(--branco);
+  color: var(--verde);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.inicio-sair:hover {
+  background: #f3f8f6;
+}
+
+.inicio-conteudo {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 56px 24px;
+}
+
+.inicio-tipo {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--verde);
+  background: #e6f0ec;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.inicio-conteudo h1 {
+  font-size: 34px;
+  font-weight: 600;
+  margin: 16px 0 8px;
+}
+
+.inicio-conteudo p {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--texto-suave);
+}
+
+@media (max-width: 700px) {
+  .inicio-conteudo {
+    padding: 32px 16px;
+  }
+
+  .inicio-conteudo h1 {
+    font-size: 26px;
+  }
+}

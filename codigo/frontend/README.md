@@ -1,4 +1,4 @@
-# Frontend — Salaa BU (login e cadastro)
+# Frontend — Sala BU (login e cadastro)
 
 Telas de login e cadastro de discente em React + Vite (JavaScript). Só o front: as regras e os dados ficam no backend ou no Supabase, ligados por um único ponto de entrada.
 

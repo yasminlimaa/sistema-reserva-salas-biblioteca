@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import LoginForm from './components/LoginForm.jsx'
 import CadastroForm from './components/CadastroForm.jsx'
+import Inicio from './pages/Inicio.jsx'
 import { authService } from './services/auth/index.js'
 
 export default function App() {
@@ -20,13 +21,7 @@ export default function App() {
   }
 
   if (usuario) {
-    return (
-      <main className="sessao">
-        <h1>{usuario.nome ? `Olá, ${usuario.nome}` : 'Olá!'}</h1>
-        <p>Sessão iniciada. Tela em construção.</p>
-        <button type="button" className="btn-primary" onClick={sair}>Sair</button>
-      </main>
-    )
+    return <Inicio usuario={usuario} sair={sair} />
   }
 
   if (tela === 'cadastro') {
@@ -38,6 +33,7 @@ export default function App() {
       />
     )
   }
+
   return (
     <LoginForm
       onSuccess={setUsuario}
