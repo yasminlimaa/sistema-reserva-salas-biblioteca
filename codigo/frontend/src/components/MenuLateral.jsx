@@ -1,3 +1,5 @@
+import React from 'react'
+
 const SECOES = [
   {
     titulo: 'Reservas',
@@ -11,6 +13,8 @@ const SECOES = [
   {
     titulo: 'Biblioteca',
     itens: [
+      /* NOVO: Item visível exclusivamente para funcionários */
+      { id: 'chaves', rotulo: 'Serviço de Chaves', icone: 'chave', apenasFuncionario: true },
       { id: 'salas', rotulo: 'Salas', icone: 'porta', emBreve: true },
       { id: 'discentes', rotulo: 'Discentes', icone: 'pessoas', emBreve: true },
     ],
@@ -34,6 +38,8 @@ const ICONES = {
     'M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1 M9.5 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z M21 19v-1a4 4 0 0 0-3-3.9 M16 4.1a3.5 3.5 0 0 1 0 6.8',
   sino: 'M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8 M10 21h4',
   sair: 'M15 4h4v16h-4 M10 17l5-5-5-5 M15 12H4',
+  /* NOVO: Ícone SVG de chave */
+  chave: 'M21 2l-6 6M15.5 7.5l2.5 2.5M13 10l2.5 2.5M10 14a5 5 0 1 1-7-7 5 5 0 0 1 7 7z',
 }
 
 function Icone({ nome }) {
@@ -78,24 +84,27 @@ export default function MenuLateral({ usuario, pagina, irPara, naoLidos, sair })
           <div className="menu-secao" key={secao.titulo}>
             <h3>{secao.titulo}</h3>
             <div className="menu-itens">
-              {secao.itens.map((item) => {
-                const ativo = pagina === item.id
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className={ativo ? 'menu-item ativo' : 'menu-item'}
-                    disabled={item.emBreve}
-                    title={item.emBreve ? 'Em breve' : undefined}
-                    aria-current={ativo ? 'page' : undefined}
-                    onClick={() => acionar(item)}
-                  >
-                    <Icone nome={item.icone} />
-                    <span>{item.rotulo}</span>
-                    {item.badge && naoLidos > 0 && <span className="menu-badge">{naoLidos}</span>}
-                  </button>
-                )
-              })}
+              {/* ATUALIZADO: Filtra os itens ignorando itens de funcionário caso seja discente */}
+              {secao.itens
+                .filter((item) => !item.apenasFuncionario || usuario.perfil === 'funcionario')
+                .map((item) => {
+                  const ativo = pagina === item.id
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={ativo ? 'menu-item ativo' : 'menu-item'}
+                      disabled={item.emBreve}
+                      title={item.emBreve ? 'Em breve' : undefined}
+                      aria-current={ativo ? 'page' : undefined}
+                      onClick={() => acionar(item)}
+                    >
+                      <Icone nome={item.icone} />
+                      <span>{item.rotulo}</span>
+                      {item.badge && naoLidos > 0 && <span className="menu-badge">{naoLidos}</span>}
+                    </button>
+                  )
+                })}
             </div>
           </div>
         ))}

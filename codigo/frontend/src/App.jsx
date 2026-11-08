@@ -9,6 +9,7 @@ import MinhasReservas from './pages/MinhasReservas.jsx'
 import { authService } from './services/auth/index.js'
 import { contarAvisosNaoLidos } from './services/reservas/index.js'
 import './layout.css'
+import ServicoChaves from './pages/ServicoChaves.jsx'
 
 export default function App() {
   const [tela, setTela] = useState('login')
@@ -58,6 +59,7 @@ export default function App() {
               }}
             />
           )}
+
           {pagina === 'participantes' && rascunhoReserva && (
             <Participantes
               usuario={usuario}
@@ -70,8 +72,17 @@ export default function App() {
               }}
             />
           )}
+
           {pagina === 'minhas' && <MinhasReservas usuario={usuario} irPara={setPagina} />}
-          {pagina !== 'disponibilidade' && pagina !== 'participantes' && pagina !== 'minhas' && (
+
+          {/* Renderiza o Serviço de Chaves */}
+          {pagina === 'chaves' && <ServicoChaves usuario={usuario} />}
+
+          {/*Adicionado 'pagina !== "chaves"' para evitar sobreposição */}
+          {pagina !== 'disponibilidade' && 
+           pagina !== 'participantes' && 
+           pagina !== 'minhas' && 
+           pagina !== 'chaves' && (
             <Inicio
               usuario={usuario}
               irPara={(destino) => {

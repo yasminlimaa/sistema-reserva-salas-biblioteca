@@ -1,0 +1,427 @@
+/* Recepção e Serviço de Chaves */
+
+.servico-chaves-page {
+  position: relative;
+  width: 100%;
+  max-width: 1440px;
+  min-height: 900px;
+  margin: 0 auto;
+  background: linear-gradient(0deg, #F3F4F0, #F3F4F0), #FFFFFF;
+  font-family: 'IBM Plex Sans', sans-serif;
+  color: #15201B;
+  box-sizing: border-box;
+  padding: 32px 24px;
+}
+
+/* Header */
+.chaves-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 24px;
+  gap: 20px;
+}
+
+.chaves-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 261px;
+}
+
+.chaves-subtitle {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 18px;
+  color: #55615B;
+}
+
+.chaves-heading {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 36px;
+  line-height: 46px;
+  color: #15201B;
+  margin: 0;
+}
+
+/* Busca */
+.chaves-search-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 380px;
+}
+
+.chaves-search-label {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 17px;
+  color: #15201B;
+}
+
+.chaves-search-form {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  width: 380px;
+  height: 50px;
+}
+
+.chaves-search-input {
+  box-sizing: border-box;
+  flex: 1;
+  height: 50px;
+  padding: 15.5px 15px;
+  background: #FFFFFF;
+  border: 1px solid #C9CFC9;
+  border-radius: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 500;
+  font-size: 15px;
+  color: #15201B;
+  outline: none;
+}
+
+.chaves-search-input::placeholder {
+  color: #757575;
+}
+
+.chaves-search-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 85px;
+  height: 48px;
+  background: #0B6B5C;
+  border-radius: 10px;
+  border: none;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.chaves-search-button:hover {
+  background: #085347;
+}
+
+/* Cards de Resumo */
+.chaves-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.summary-card {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  padding: 19px 21px;
+  height: 102px;
+  background: #FFFFFF;
+  border: 1px solid #DCE0DA;
+  border-radius: 14px;
+}
+
+.summary-card.alert {
+  background: #FDE7E5;
+  border: 1px solid #F4C3BE;
+}
+
+.summary-card-label {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 18px;
+  color: #55615B;
+}
+
+.summary-card.alert .summary-card-label {
+  color: #8A1C12;
+}
+
+.summary-card-value {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 36px;
+  line-height: 46px;
+  color: #15201B;
+  margin-top: 4px;
+}
+
+.summary-card.alert .summary-card-value {
+  color: #8A1C12;
+}
+
+/* Tabela */
+.chaves-table-section {
+  box-sizing: border-box;
+  background: #FFFFFF;
+  border: 1px solid #DCE0DA;
+  border-radius: 16px;
+  overflow: hidden;
+  min-height: 486px;
+}
+
+.chaves-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.chaves-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.chaves-table th {
+  background: #F7F8F5;
+  padding: 14px 20px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 17px;
+  color: #55615B;
+  border-bottom: 1px solid #ECEEE9;
+}
+
+.chaves-table td {
+  padding: 18px 20px;
+  border-bottom: 1px solid #ECEEE9;
+  vertical-align: middle;
+  font-size: 15px;
+}
+
+.cell-sala {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 600;
+  color: #15201B;
+}
+
+.cell-horario {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 400;
+  color: #15201B;
+}
+
+.cell-responsavel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.responsavel-nome {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 400;
+  color: #15201B;
+}
+
+.responsavel-matricula {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 500;
+  font-size: 13px;
+  color: #55615B;
+}
+
+.cell-grupo {
+  font-family: 'IBM Plex Sans', sans-serif;
+  color: #3E4A44;
+}
+
+/* Badges de Status */
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 17px;
+}
+
+.badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+}
+
+/* Variantes dos Badges */
+.badge-status.atrasada {
+  background: #FDE7E5;
+  color: #8A1C12;
+}
+.badge-status.atrasada .badge-dot {
+  background: #8A1C12;
+}
+
+.badge-status.devolvida {
+  background: #E4E7E1;
+  color: #3E4A44;
+}
+.badge-status.devolvida .badge-dot {
+  background: #3E4A44;
+}
+
+.badge-status.retirada {
+  background: #E3F0EC;
+  color: #084C42;
+}
+.badge-status.retirada .badge-dot {
+  background: #084C42;
+}
+
+.badge-status.na-recepcao {
+  background: #F0F4F1;
+  color: #55615B;
+}
+.badge-status.na-recepcao .badge-dot {
+  background: #757575;
+}
+
+/* Botões de Ação */
+.btn-action {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 18px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.btn-action.danger {
+  background: #8A1C12;
+  color: #FFFFFF;
+}
+.btn-action.danger:hover {
+  background: #6e160e;
+}
+
+.btn-action.primary {
+  background: #0B6B5C;
+  color: #FFFFFF;
+}
+.btn-action.primary:hover {
+  background: #085347;
+}
+
+.btn-action.secondary {
+  background: #FFFFFF;
+  border-color: #C9CFC9;
+  color: #15201B;
+}
+.btn-action.secondary:hover {
+  background: #F3F4F0;
+}
+
+.action-cell {
+  text-align: right;
+}
+
+/* Container de Acesso Negado */
+.acesso-negado-card {
+  box-sizing: border-box;
+  background: #FFFFFF;
+  border: 1px solid #F4C3BE;
+  border-radius: 16px;
+  padding: 48px 32px;
+  text-align: center;
+  max-width: 540px;
+  margin: 60px auto;
+}
+
+.acesso-negado-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: #8A1C12;
+  margin-bottom: 12px;
+}
+
+.acesso-negado-text {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 15px;
+  color: #55615B;
+  line-height: 22px;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(21, 32, 27, 0.4);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #FFFFFF;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 520px;
+  padding: 24px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ECEEE9;
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+}
+
+.modal-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #15201B;
+  margin: 0;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #55615B;
+}
+
+.historico-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.historico-item {
+  padding: 12px;
+  border-radius: 10px;
+  background: #F7F8F5;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
