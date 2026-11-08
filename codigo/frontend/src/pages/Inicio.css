@@ -24,6 +24,16 @@
   color: var(--texto-suave);
 }
 
+.inicio > .inicio-sucesso {
+  margin-top: 16px;
+  border: 1px solid #b8d7cc;
+  border-radius: 8px;
+  background: #e6f0ec;
+  color: var(--verde);
+  padding: 12px 14px;
+  font-size: 14px;
+}
+
 .inicio-atalhos {
   display: grid;
   grid-template-columns: 1fr;

@@ -5,7 +5,7 @@ const SECOES = [
       { id: 'inicio', rotulo: 'Início', icone: 'casa' },
       { id: 'disponibilidade', rotulo: 'Disponibilidade', icone: 'calendario' },
       { id: 'nova', rotulo: 'Nova reserva', icone: 'mais', ir: 'disponibilidade' },
-      { id: 'minhas', rotulo: 'Minhas reservas', icone: 'lista', emBreve: true },
+      { id: 'minhas', rotulo: 'Minhas reservas', icone: 'lista' },
     ],
   },
   {
