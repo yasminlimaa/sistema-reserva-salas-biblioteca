@@ -1,0 +1,33 @@
+{
+  "name": "reservas",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Serviço de Reservas: migração inicial e diagnóstico PostgreSQL",
+  "scripts": {
+    "db:check": "node --env-file=.env testar-conexao.js",
+    "db:test": "node --env-file=.env verificar-restricoes.js",
+    "db:migrate": "node --env-file=.env aplicar-migracoes.js",
+    "db:setup": "node --env-file=.env configurar-acesso.js",
+    "db:check:app": "node --env-file=.env.app testar-conexao.js",
+    "demo:setup": "node preparar-demo.js",
+    "demo:run": "node --env-file=.env.demo roteiro-demo.js",
+    "demo:events": "node --env-file=.env.demo observar-eventos.js",
+    "start": "node --env-file=.env.app --env-file=.env.demo server.js",
+    "worker": "node --env-file=.env.app --env-file=.env.demo worker.js",
+    "worker:once": "node --env-file=.env.app --env-file=.env.demo worker.js --once",
+    "test:integration": "node --env-file=.env --env-file=.env.demo --test --test-concurrency=1 integration/api.integration.js",
+    "test": "node --test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "dependencies": {
+    "amqplib": "2.2.1",
+    "fastify": "5.12.8",
+    "pg": "8.23.1"
+  }
+}
