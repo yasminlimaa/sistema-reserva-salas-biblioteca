@@ -1,6 +1,6 @@
 # Modelagem do serviço de Reservas
 
-Revisão em 20/10/2026 a partir da tentativa do aluno. Modelo proposto para a primeira migração; ainda não há SQL implementado nem banco verificado.
+Modelo iniciado em 20/10/2026 e atualizado em 07/11/2026. As tabelas, migrações de integridade e API foram implementadas e testadas no PostgreSQL de desenvolvimento. Resultados atuais em status-reservas.md; este documento registra as decisões do modelo.
 
 ## Propriedade dos dados
 
@@ -99,7 +99,8 @@ As duas propostas abaixo permanecem pendentes e não serão aplicadas como restr
 Outras decisões necessárias:
 
 - Acordar formatos dos identificadores com Usuários e Salas.
-- Confirmar convenção de intervalos. A proposta [inicio, fim) permite horários adjacentes; eventual espera obrigatória é uma política adicional.
+- Convenção confirmada em 07/11/2026: [inicio, fim), permitindo horários adjacentes. Eventual espera obrigatória continua sendo proposta adicional não implementada.
+- Cancelamento confirmado em 07/11/2026: responsável ou funcionário, sem prazo de antecedência. Nesta demo, identidade e perfil são fictícios, controlados pelo servidor.
 - Definir proteção de concorrência antes de considerar o banco funcional para criar, alterar e cancelar reservas.
 
 Nenhuma política pendente foi implementada nesta revisão.
@@ -126,6 +127,6 @@ O mínimo de três envolve vários registros e não é garantido por uma simples
 
 Corrigidos: ausência de responsável/status na lista de atributos, intervalo ambíguo, identificador da participação e repetição de horário nos vínculos. A ideia do aluno de preservar cancelamento foi mantida; a proposta usa status e instante para registrar o fato explicitamente. Novas políticas foram separadas dos requisitos confirmados.
 
-Verificação: revisão documental; nenhuma execução de SQL ou alteração da demo. Não há comprovação de banco pronto nesta etapa.
+Na revisão inicial houve apenas análise documental. Em 07/11/2026, as migrações 001–004, a API e os testes com banco real foram concluídos para a demo local; consultar as evidências atuais em status-reservas.md.
 
-Próximo incremento: resolver as decisões que afetam o esquema, escolher tipos e preparar a primeira migração versionada de Reservas, seguida de dados fictícios e verificações de integridade. O aluno continuará escrevendo a parte central em tarefas pequenas, com revisão antes da aplicação ao banco.
+Próximo incremento: substituir os adaptadores fictícios por contratos acordados de Usuários e Salas, integrar Notificações e definir políticas de edição/Chaves antes de implementar esses fluxos. A API conserva os IDs UUID deste protótipo, a confirmar na integração com a equipe.

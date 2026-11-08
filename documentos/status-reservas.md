@@ -1,41 +1,59 @@
 # Status para a equipe — 07/11/2026
 
-## Implementado no checkout
+## Entrega atual
 
-- Demo RabbitMQ isolada: evento sintético em logs/fanout e uma fila temporária por consumidor. Evidência anterior de entrega está em evidencias-middleware/06-entrega-e-fanout.md; o broker não foi retestado nesta etapa.
-- Modelo de Reservas e migração SQL inicial com duas tabelas: reservas e reserva_participantes.
-- Duração positiva de no máximo duas horas, estado de cancelamento coerente e participante único por reserva definidos no SQL.
-- Diagnóstico Node.js 24/pg com configuração por ambiente, TLS verificado, timeout, pool limitado, consulta de existência das tabelas e encerramento das conexões.
-- Scripts npm, exemplo de ambiente sem segredos, instruções reproduzíveis e testes locais de falhas de configuração sem exposição de credenciais.
-- Script db:test com 14 cenários de restrições no banco real, dados sintéticos, SAVEPOINT por cenário e rollback de todas as operações.
+Serviço de Reservas demonstrável localmente: API Fastify, persistência PostgreSQL/Supabase, integridade transacional, autorização com identidades fictícias e publicação de eventos via outbox/RabbitMQ. Usuários e Salas ainda são adaptadores de demo. Não é o sistema completo nem uma implantação de produção.
 
-## Verificado nesta etapa
+## Implementado
 
-Três testes automatizados locais passaram com Node 24.16.0: configuração ausente, URI inválida contendo segredo fictício e tentativa de substituir TLS pela URI. Executar os comandos dentro de codigo/backend/reservas.
+- Migração 001: reserva e participantes, UUIDs, intervalo positivo de até duas horas, status/cancelamento e participante único por reserva.
+- Migração 002: responsável obrigatoriamente participante, mínimo de três verificado ao finalizar a transação, índices e outbox transacional. Dados antigos inválidos interrompem a migração em vez de serem apagados/corrigidos silenciosamente.
+- Migrações 003/004: role própria reservas_app, sem privilégios administrativos ou DELETE/TRUNCATE/CREATE, RLS e políticas exclusivas do backend. Sem concessão a anon/authenticated.
+- Runner de migrações versionadas com hash e reconhecimento da base aplicada anteriormente no painel; scripts de credenciais e tokens não sobrescrevem arquivos nem rotacionam senhas existentes.
+- POST /reservas; GET /reservas e /reservas/:id; GET /disponibilidade; POST /reservas/:id/cancelamento; health/readiness e catálogo fictício.
+- Responsável obtido da identidade autenticada, três discentes distintos ativos e sala ativa no catálogo de demonstração. Campo de responsável forjado no corpo é rejeitado.
+- Transação com bloqueios por sala e todos os participantes, em ordem determinística, seguida de revalidação. Cancela de forma idempotente, mantém participantes/histórico e libera a ocupação.
+- Outbox gravada na mesma transação; worker separado publica mensagens persistentes com mandatory, confirm channel e backpressure; retry com backoff limitado a cinco, quarentena persistida em falhou_em. Pode haver reenvio do mesmo event_id após crash.
+- Roteiro HTTP de apresentação e observador técnico AMQP. O observador não é Notificações: imprime e dá ACK técnico, sem aviso persistido ou deduplicação.
 
-Na etapa anterior, a validação TLS não confiava no certificado. Após a configuração pelo aluno, o agente repetiu db:check e confirmou conexão TLS, banco postgres e as tabelas reservas.reservas e reservas.reserva_participantes. A execução exigiu saída do sandbox por restrição de rede. Credenciais não foram impressas.
-
-db:test passou em 14/14 cenários no Supabase: limites de duração, intervalo inválido, obrigatoriedade de sala, status e cancelamento, reserva_id repetido, participante duplicado, referência inválida, exclusão bloqueada por participantes e cancelamento preservando os vínculos. O teste de status desconhecido inicialmente exigia uma constraint específica; foi corrigido para aceitar a rejeição CHECK, pois a entrada viola também a coerência do cancelamento. A segunda execução passou integralmente, com código 0.
-
-Os cenários usaram dados sintéticos dentro de uma transação com SAVEPOINT e ROLLBACK, sem COMMIT. A consulta final confirmou ausência dos IDs de reserva gerados. Nenhum dado de demonstração foi mantido e nenhuma migração nova foi aplicada.
-
-## Próximas entregas para Reservas funcional
-
-1. Criar credencial de aplicação com permissões limitadas ao schema de Reservas antes de operar a API.
-2. Manter db:test como verificação reproduzível das restrições básicas e ampliar os cenários conforme as próximas regras forem implementadas.
-3. Implementar criação atômica de reserva e participantes: mínimo de três discentes válidos e responsável incluído. A migração atual permite uma reserva com menos de três e não garante responsável participante.
-4. Impedir sobreposição por sala e por qualquer participante, inclusive em salas diferentes; definir convenção de intervalos antes da implementação e testar requisições simultâneas. Criação, edição e cancelamento devem seguir a mesma estratégia transacional.
-5. Criar API Fastify e integrar identidade/permissões de Usuários e estado de Salas pelos contratos acordados. Formatos dos IDs ainda precisam de alinhamento com a equipe.
-6. Integrar os fatos persistidos com Notificações/RabbitMQ, evoluindo para confirms, ACK após processamento, deduplicação e outbox. A demo atual não oferece essas garantias.
-
-Chaves, frontend e Docker Compose continuam sendo incrementos posteriores para a apresentação integrada. Não há teste de carga ou implantação AWS nesta entrega.
-
-## Decisões já tomadas
+## Decisões confirmadas pelo aluno
 
 - Responsável é discente participante e conta uma vez no mínimo de três.
-- Duração máxima de duas horas; durações menores permitidas.
-- Cancelamento após dez minutos de ausência e espera de uma hora entre reservas seguem como propostas pendentes, sem implementação.
+- Duração máxima de duas horas, permitindo intervalos menores.
+- Intervalos [inicio,fim): horários adjacentes não conflitam.
+- Responsável e funcionário podem cancelar sem prazo de antecedência.
+- Usuários/Salas fictícios explícitos para a apresentação, com interfaces separadas para integração real.
+- Cancelamento automático após dez minutos de ausência e espera de uma hora entre reservas seguem pendentes, sem implementação.
 
-## Mensagem sugerida para compartilhar
+## Verificações reais
 
-“A conexão TLS com Supabase e as tabelas básicas de Reservas estão verificadas. Os 14 testes de restrições passaram no banco real, sem deixar dados fictícios. Ainda faltam permissões próprias, regras de três participantes/responsável, proteção de conflitos concorrentes e API integrada a Usuários e Salas. A demo RabbitMQ continua isolada, sem publicação a partir de reservas persistidas.”
+Ambiente: Node 24.16.0; Fastify 5.12.8, pg 8.23.1, amqplib 2.2.1, conforme package-lock. PostgreSQL de desenvolvimento no Supabase com TLS verificado e runtime usando reservas_app.
+
+- 18 testes locais passaram: validação de entrada, autorização inicial, modo de demonstração, readiness, proteção das credenciais e três regressões de fechamento AMQP limitado/reconexão/conexão tardia. As três regressões falharam antes da correção do problema 1 e passaram depois, com relógio simulado e sem broker externo.
+- 18 verificações de integração passaram (17 cenários mais o teste agrupador) em cerca de 73 segundos: DML restrito, criação/outbox, conflito simultâneo por sala, conflito entre salas com participante compartilhado, horários adjacentes, reservas independentes, cancelamento idempotente e concorrente, autorização de consulta/listagem paginada, disponibilidade e liberação de horário, rollback de criação quando a outbox falha, retry/quarentena, ordem de publicação com dois workers e restrições adiadas de grupo/responsável.
+- Falhas do publicador foram injetadas na integração para verificar estados da outbox; isso é diferente do ensaio com RabbitMQ real. Os testes de integração removem somente seus próprios registros, incluindo outbox, e não publicam no broker.
+- Migrações 001–004 aplicadas/conferidas no ambiente. A primeira tentativa de escrita pela role restrita identificou RLS já ativo nas tabelas antigas e nenhuma política; a correção foi registrada na migração 004, mantendo RLS.
+- Ensaio HTTP real na porta 3001 passou com 400 para grupo insuficiente, 201 para criação, 409 para conflitos, 200 para consulta/cancelamento e 201 para reutilização do horário. Corrigido um cabeçalho JSON indevido no roteiro de cancelamento sem corpo.
+- Os 14 testes básicos anteriores também passaram após as novas migrações, com rollback. Não verificam constraints adiadas; essas são exercitadas explicitamente na integração.
+- RabbitMQ real: seis eventos de três reservas fictícias (incluindo o ensaio inicial corrigido) foram confirmados pelo broker e observados com os mesmos event_id e reservation_id. O worker encerrou com código 0. Todos os registros do ensaio ficaram cancelados, preservados no histórico.
+
+Os testes com PostgreSQL usam dados sintéticos; a integração apaga somente seus próprios IDs. O roteiro de apresentação mantém registros fictícios cancelados para mostrar o histórico. Não houve medição de carga, teste de 1000 clientes ou comprovação de SLA.
+
+Revisão Ponytail: corrigido o problema 1 (timeout que travava aguardando fechamento), com limite adicional de um segundo e destruição do transporte se necessário. Nessa correção isolada foram usados testes locais simulados.
+
+Corrigidos também os problemas 2 e 3: cancelamento não ultrapassa confirmação pendente da mesma reserva, inclusive em retry/quarentena ou em publicação por outro worker; o teste de listagem percorre as páginas e semeia 101 reservas fictícias anteriores para reproduzir o limite. Os três cenários de regressão (paginação, retry e dois workers) falharam antes e passaram depois no PostgreSQL real. A limpeza removeu somente os IDs criados pelos testes. Não houve nova migração ou publicação AMQP nessa correção; a quarentena da confirmação precisa de recuperação administrativa antes de liberar seu cancelamento.
+
+## Próximas entregas e responsáveis
+
+1. Yasmin/Usuários: autenticação real, identidade/perfil verificados pelo backend, IDs e contrato para validar participantes; não autorizar funcionário por perfil editável no navegador/user_metadata.
+2. Liah/Salas: IDs e contrato de cadastro/atividade. Disponibilidade deve continuar sob a autoridade de Reservas, sem algoritmo independente concorrente.
+3. Wanderson/Notificações: consumir notificacoes.reservas, deduplicar event_id persistentemente, persistir aviso e dar ACK após processamento; publisher confirm não comprova aviso entregue.
+4. Euderlan/Chaves: integrar reservation_id, retirada/devolução, autorização e histórico. Acordar efeito de cancelamento com chave retirada antes da integração correspondente.
+5. Gabriel/Reservas: substituir adaptadores fictícios, testar falhas das dependências reais, acordar edição/alteração de reservas e só então acrescentar esse endpoint/evento com o mesmo protocolo de concorrência.
+6. Equipe: tela de reservas, integração com login existente, Docker Compose completo e implantação posterior. Esta API local não foi publicada na AWS e não substitui os outros serviços.
+
+## Como apresentar e compartilhar
+
+Ver contrato-reservas.md para endpoints, JSON e envelope dos eventos. Ver roteiro-apresentacao-reservas.md para os comandos dos terminais e o roteiro de fala. Instruções de instalação/credenciais estão no README do serviço.
+
+Mensagem sugerida: “Reservas já cria, consulta e cancela com banco real; bloqueia conflitos concorrentes por sala/participante; preserva histórico e registra eventos na outbox. Os testes de API e integração passaram. A demo usa usuários/salas fictícios; os contratos estão documentados para integrar Usuários, Salas, Notificações e Chaves. A confirmação do broker ainda não representa notificação entregue ao aluno.”

@@ -45,7 +45,7 @@ export function createPool(env = process.env) {
     idleTimeoutMillis: 10_000,
     query_timeout: 10_000,
     statement_timeout: 10_000,
-    application_name: 'biblioteca-reservas-diagnostico',
+    application_name: env.PGAPPNAME || 'biblioteca-reservas',
   });
 }
 
