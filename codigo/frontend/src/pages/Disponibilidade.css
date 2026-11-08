@@ -1,0 +1,293 @@
+.disp {
+  display: grid;
+  gap: 20px;
+}
+
+.disp-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.disp-data {
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+.disp-cabecalho h1 {
+  font-size: 30px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.disp-filtros {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.disp-filtros .field {
+  margin-bottom: 0;
+  width: 160px;
+}
+
+.disp-filtros .input {
+  height: 44px;
+}
+
+/* Grade de disponibilidade */
+
+.disp-grade {
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  padding: 20px;
+  user-select: none;
+}
+
+.grade-linha {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  border-top: 1px solid #edefe9;
+}
+
+.grade-cabecalho {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.grade-cabecalho .trilha {
+  height: auto;
+  background: none;
+}
+
+.grade-cabecalho .trilha span {
+  font-size: 11px;
+  color: var(--texto-suave);
+}
+
+.sala-rotulo {
+  display: grid;
+  gap: 2px;
+}
+
+.sala-rotulo strong {
+  font-size: 14px;
+}
+
+.sala-rotulo small {
+  font-size: 11px;
+  color: var(--texto-suave);
+}
+
+.trilha {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(16, 1fr);
+  height: 44px;
+  background: #f7f8f5;
+  border-radius: 6px;
+}
+
+.celula {
+  cursor: pointer;
+  border-left: 1px solid #e8eae4;
+}
+
+.celula:first-child {
+  border-left: 0;
+}
+
+.celula-bloqueada {
+  cursor: not-allowed;
+}
+
+.bloco {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.bloco-reservado {
+  background: #d3dcd7;
+  color: #44534d;
+}
+
+.bloco-selecao {
+  background: #e6f0ec;
+  border: 2px solid var(--verde);
+  color: var(--verde);
+  font-weight: 600;
+}
+
+.bloco-manutencao {
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 6px;
+  background: repeating-linear-gradient(45deg, #fbeccb, #fbeccb 6px, #f6dcaa 6px, #f6dcaa 12px);
+  color: #8a5a12;
+}
+
+.legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+
+.legenda span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legenda i {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.lg-reservada {
+  background: #d3dcd7;
+}
+
+.lg-selecao {
+  background: #e6f0ec;
+  border: 2px solid var(--verde);
+}
+
+.lg-manutencao {
+  background: #f6dcaa;
+}
+
+.lg-livre {
+  background: #f7f8f5;
+  border: 1px solid var(--borda) !important;
+}
+
+/* Cartão da seleção */
+
+.card-selecao {
+  display: grid;
+  gap: 12px;
+  background: var(--verde-escuro);
+  color: #eef1ec;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.card-selecao h2 {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.card-selecao p {
+  font-size: 14px;
+  color: #b9c4bd;
+}
+
+.card-rotulo {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8fa198;
+}
+
+.card-selecao.vazio {
+  background: var(--branco);
+  color: var(--texto-suave);
+  border: 1px dashed var(--borda);
+}
+
+.card-selecao.vazio p {
+  color: var(--texto-suave);
+}
+
+.horarios {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.horarios div {
+  display: grid;
+  gap: 4px;
+  background: #22332d;
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.horarios small {
+  font-size: 11px;
+  color: #8fa198;
+}
+
+.horarios strong {
+  font-size: 18px;
+}
+
+.checks {
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+}
+
+.checks .alerta {
+  color: #f2c46d;
+}
+
+.card-selecao .btn-primary:disabled {
+  background: #3f6b5f;
+  color: #d9e4de;
+  opacity: 1;
+}
+
+.nota {
+  font-size: 12px;
+  color: #8fa198 !important;
+}
+
+@media (max-width: 800px) {
+  .disp-cabecalho h1 {
+    font-size: 24px;
+  }
+
+  .disp-filtros .field {
+    width: 100%;
+  }
+
+  .grade-linha {
+    grid-template-columns: 100px 1fr;
+  }
+
+  .disp-grade {
+    overflow-x: auto;
+  }
+
+  .disp-grade > * {
+    min-width: 560px;
+  }
+}
