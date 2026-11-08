@@ -1,0 +1,186 @@
+/* Layout do app depois do login: menu lateral à esquerda e conteúdo à direita. */
+
+.layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+  background: var(--fundo);
+}
+
+.menu-lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  background: var(--branco);
+  border-right: 1px solid var(--borda);
+  padding: 20px 14px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.menu-marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+}
+
+.menu-marca strong {
+  display: block;
+  font-size: 14px;
+  color: var(--verde-escuro);
+}
+
+.menu-marca small {
+  display: block;
+  font-size: 10px;
+  color: var(--texto-suave);
+}
+
+.menu-secoes {
+  display: grid;
+  gap: 22px;
+}
+
+.menu-secao h3 {
+  margin: 0 8px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9aa39e;
+}
+
+.menu-itens {
+  display: grid;
+  gap: 2px;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  padding: 9px 10px;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  color: var(--texto);
+  cursor: pointer;
+}
+
+.menu-item:hover:not(:disabled) {
+  background: #f3f5f1;
+}
+
+.menu-item.ativo {
+  background: #e6f0ec;
+  color: var(--verde);
+  font-weight: 600;
+}
+
+.menu-item:disabled {
+  color: #a4aca7;
+  cursor: default;
+}
+
+.menu-badge {
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--erro);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.menu-rodape {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f3f5f1;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.menu-rodape strong {
+  display: block;
+  font-size: 13px;
+}
+
+.menu-rodape small {
+  display: block;
+  font-size: 11px;
+  color: var(--texto-suave);
+}
+
+.menu-avatar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border-radius: 50%;
+  background: var(--verde-escuro);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.layout-conteudo {
+  min-width: 0;
+  padding: 32px 40px 48px;
+}
+
+@media (max-width: 800px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .menu-lateral {
+    position: static;
+    height: auto;
+    gap: 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--borda);
+    padding: 12px 16px;
+  }
+
+  .menu-marca,
+  .menu-rodape {
+    display: none;
+  }
+
+  .menu-secoes {
+    display: flex;
+    overflow-x: auto;
+    gap: 16px;
+  }
+
+  .menu-secao h3 {
+    display: none;
+  }
+
+  .menu-itens {
+    display: flex;
+    gap: 4px;
+  }
+
+  .menu-item {
+    white-space: nowrap;
+    width: auto;
+  }
+
+  .layout-conteudo {
+    padding: 20px 16px 40px;
+  }
+}
