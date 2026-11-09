@@ -38,7 +38,7 @@ function CartaoReserva({ reserva, usuario, onCancelar, cancelando }) {
   )
 }
 
-export default function MinhasReservas({ usuario, irPara }) {
+export default function MinhasReservas({ usuario }) {
   const [reservas, setReservas] = useState(null)
   const [mensagem, setMensagem] = useState('')
   const [erro, setErro] = useState('')
@@ -108,7 +108,6 @@ export default function MinhasReservas({ usuario, irPara }) {
           <h1>Minhas reservas</h1>
           <p>Acompanhe suas reservas e consulte o histórico.</p>
         </div>
-        <button type="button" className="nova-reserva" onClick={() => irPara('disponibilidade')}>+ Nova reserva</button>
       </header>
 
       {mensagem && <p className="reservas-sucesso" role="status">{mensagem}</p>}

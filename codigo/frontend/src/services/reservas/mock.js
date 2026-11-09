@@ -5,12 +5,12 @@ import { motivoReservaIndisponivel } from '../../lib/datas.js'
 const CHAVE = 'demo-reservas'
 
 export const SALAS = [
-  { id: 's1', nome: 'Sala 01', capacidade: 6, piso: 1, bloco: 'Bloco A', equipamentos: ['Quadro branco'] },
-  { id: 's2', nome: 'Sala 02', capacidade: 8, piso: 1, bloco: 'Bloco A', equipamentos: ['Quadro branco', 'TV'] },
-  { id: 's3', nome: 'Sala 03', capacidade: 10, piso: 1, bloco: 'Bloco B', equipamentos: ['Projetor', 'Quadro branco'] },
-  { id: 's4', nome: 'Sala 04', capacidade: 4, piso: 1, bloco: 'Bloco B' },
-  { id: 's5', nome: 'Sala 05', capacidade: 12, piso: 2, bloco: 'Bloco A', equipamentos: ['TV', 'Ar-condicionado'] },
-  { id: 's6', nome: 'Sala 06', capacidade: 8, piso: 2, bloco: 'Bloco B', equipamentos: ['Quadro branco'], emManutencao: true },
+  { id: 's1', nome: 'Sala 01', capacidade: 6, bloco: 'Bloco A', equipamentos: ['Quadro branco'] },
+  { id: 's2', nome: 'Sala 02', capacidade: 8, bloco: 'Bloco A', equipamentos: ['Quadro branco', 'TV'] },
+  { id: 's3', nome: 'Sala 03', capacidade: 10, bloco: 'Bloco B', equipamentos: ['Projetor', 'Quadro branco'] },
+  { id: 's4', nome: 'Sala 04', capacidade: 4, bloco: 'Bloco B' },
+  { id: 's5', nome: 'Sala 05', capacidade: 12, bloco: 'Bloco A', equipamentos: ['TV', 'Ar-condicionado'] },
+  { id: 's6', nome: 'Sala 06', capacidade: 8, bloco: 'Bloco B', equipamentos: ['Quadro branco'], emManutencao: true },
 ]
 
 // Catálogo exclusivo da demonstração local. A integração real dependerá do serviço de Usuários.
@@ -49,6 +49,14 @@ export async function listarOcupacao(data) {
   return ler()
     .reservas.filter((r) => r.status === 'confirmada' && r.inicio.slice(0, 10) === data)
     .map((r) => ({ salaId: r.salaId, inicio: r.inicio, fim: r.fim }))
+}
+
+// Todas as reservas (de qualquer participante), opcionalmente de um dia. Usado pela gestão de reservas.
+export async function listarTodasReservas(data = '') {
+  return ler()
+    .reservas.filter((r) => !data || r.inicio.slice(0, 10) === data)
+    .map((r) => ({ ...r, salaNome: nomeDaSala(r.salaId) }))
+    .sort((a, b) => a.inicio.localeCompare(b.inicio))
 }
 
 export async function buscarDiscentes(termo = '') {
@@ -107,7 +115,7 @@ export async function cancelarReservaDemo(reservaId, solicitante) {
   const dados = ler()
   const reserva = dados.reservas.find((item) => item.id === reservaId)
   if (!reserva) throw new Error('Reserva de demonstração não encontrada.')
-  if (solicitante.id !== reserva.responsavelId && solicitante.perfil !== 'funcionario') {
+  if (solicitante.id !== reserva.responsavelId && !['funcionario', 'adm'].includes(solicitante.perfil)) {
     throw new Error('Somente o responsável pode cancelar esta reserva.')
   }
   if (reserva.status === 'cancelada') return { ...reserva, salaNome: nomeDaSala(reserva.salaId) }

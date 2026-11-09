@@ -264,27 +264,27 @@
 }
 
 .badge-status.devolvida {
-  background: #E4E7E1;
-  color: #3E4A44;
+  background: #EFE9FA;
+  color: #5B3E9E;
 }
 .badge-status.devolvida .badge-dot {
-  background: #3E4A44;
+  background: #7A55C7;
 }
 
 .badge-status.retirada {
-  background: #E3F0EC;
-  color: #084C42;
+  background: #E3F5EA;
+  color: #1E6B3A;
 }
 .badge-status.retirada .badge-dot {
-  background: #084C42;
+  background: #2E9E5B;
 }
 
 .badge-status.na-recepcao {
-  background: #F0F4F1;
-  color: #55615B;
+  background: #E4EEF9;
+  color: #1F4E79;
 }
 .badge-status.na-recepcao .badge-dot {
-  background: #757575;
+  background: #2F6DB5;
 }
 
 /* Botões de Ação */

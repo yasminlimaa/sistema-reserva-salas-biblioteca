@@ -101,6 +101,16 @@ export async function listarServicoChavesDoDia(dataFiltro) {
   })
 }
 
+// Situação da chave de uma reserva específica (usada pela gestão de reservas).
+export function statusChaveDaReserva(reserva) {
+  const status = lerStatusChaves()[reserva.id]?.status ?? 'na-recepcao'
+  const agora = new Date()
+  const p = (n) => String(n).padStart(2, '0')
+  const agoraTexto = `${agora.getFullYear()}-${p(agora.getMonth() + 1)}-${p(agora.getDate())}T${p(agora.getHours())}:${p(agora.getMinutes())}`
+  if (status === 'retirada' && reserva.fim < agoraTexto) return 'atrasada'
+  return status
+}
+
 export async function registrarRetiradaChave(reservaId, operadorNome = 'Recepção') {
   const statusChaves = lerStatusChaves()
   const horaAtual = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })

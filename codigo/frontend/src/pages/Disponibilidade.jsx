@@ -36,7 +36,6 @@ export default function Disponibilidade({ onAvancar, selecaoInicial }) {
     && !motivoReservaIndisponivel(dataInicial, selecaoInicial.inicio, selecaoInicial.fim)
   const [data, setData] = useState(dataInicial)
   const [faixa, setFaixa] = useState('3-6')
-  const [piso, setPiso] = useState('todos')
   const [ocupacao, setOcupacao] = useState([])
   const [agora, setAgora] = useState(() => new Date())
   const [avisoData, setAvisoData] = useState('')
@@ -91,9 +90,7 @@ export default function Disponibilidade({ onAvancar, selecaoInicial }) {
   }, [])
 
   const faixaAtual = FAIXAS.find((f) => f.valor === faixa)
-  const salasVisiveis = SALAS.filter((sala) => (
-    sala.capacidade >= faixaAtual.minimo && (piso === 'todos' || sala.piso === Number(piso))
-  ))
+  const salasVisiveis = SALAS.filter((sala) => sala.capacidade >= faixaAtual.minimo)
 
   function livre(salaId, hora) {
     return !motivoReservaIndisponivel(data, `${pad(hora)}:00`, `${pad(hora + 1)}:00`, agora)
@@ -169,13 +166,6 @@ export default function Disponibilidade({ onAvancar, selecaoInicial }) {
     toquePendente.current = null
   }
 
-  function atualizarPiso(valor) {
-    setPiso(valor)
-    setSelecao(null)
-    toqueInicial.current = null
-    toquePendente.current = null
-  }
-
   function avancar() {
     if (!salaSelecionada || !selecao || !onAvancar) return
     onAvancar({
@@ -241,24 +231,6 @@ export default function Disponibilidade({ onAvancar, selecaoInicial }) {
               ))}
             </select>
           </Field>
-
-          <div className="disp-pisos" role="group" aria-label="Filtrar por piso">
-            {[
-              { valor: 'todos', rotulo: 'Todos' },
-              { valor: '1', rotulo: 'Piso 1' },
-              { valor: '2', rotulo: 'Piso 2' },
-            ].map((opcao) => (
-              <button
-                key={opcao.valor}
-                type="button"
-                className={piso === opcao.valor ? 'filtro-piso ativo' : 'filtro-piso'}
-                aria-pressed={piso === opcao.valor}
-                onClick={() => atualizarPiso(opcao.valor)}
-              >
-                {opcao.rotulo}
-              </button>
-            ))}
-          </div>
         </div>
       </header>
 
@@ -282,7 +254,7 @@ export default function Disponibilidade({ onAvancar, selecaoInicial }) {
             <div className="grade-linha" key={sala.id}>
               <div className="sala-rotulo">
                 <strong>{sala.nome}</strong>
-                <small>Piso {sala.piso}{sala.bloco ? ` · ${sala.bloco}` : ''} · Até {sala.capacidade} pessoas</small>
+                <small>{sala.bloco ? `${sala.bloco} · ` : ''}Até {sala.capacidade} pessoas</small>
                 {sala.equipamentos?.length > 0 && <small>{sala.equipamentos.join(' e ')}</small>}
               </div>
 
@@ -358,7 +330,7 @@ export default function Disponibilidade({ onAvancar, selecaoInicial }) {
         <section className="card-selecao">
           <span className="card-rotulo">Sua seleção</span>
           <h2>{salaSelecionada.nome}</h2>
-          <p>Piso {salaSelecionada.piso}{salaSelecionada.bloco ? ` · ${salaSelecionada.bloco}` : ''} · Até {salaSelecionada.capacidade} pessoas</p>
+          <p>{salaSelecionada.bloco ? `${salaSelecionada.bloco} · ` : ''}Até {salaSelecionada.capacidade} pessoas</p>
           {salaSelecionada.equipamentos?.length > 0 && (
             <p className="recursos">Recursos: {salaSelecionada.equipamentos.join(' e ')}</p>
           )}

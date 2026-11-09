@@ -1,32 +1,40 @@
 import React from 'react'
 
+const TODOS = ['discente', 'funcionario', 'adm']
+
+// Cada item diz quais perfis enxergam. Seções sem itens visíveis para o perfil somem do menu.
 const SECOES = [
   {
     titulo: 'Reservas',
     itens: [
-      { id: 'inicio', rotulo: 'Início', icone: 'casa' },
-      { id: 'disponibilidade', rotulo: 'Disponibilidade', icone: 'calendario' },
-      { id: 'nova', rotulo: 'Nova reserva', icone: 'mais', ir: 'disponibilidade' },
-      { id: 'minhas', rotulo: 'Minhas reservas', icone: 'lista' },
+      { id: 'inicio', rotulo: 'Início', icone: 'casa', perfis: TODOS },
+      { id: 'nova', rotulo: 'Nova reserva', icone: 'mais', ir: 'disponibilidade', perfis: ['discente'] },
+      { id: 'minhas', rotulo: 'Minhas reservas', icone: 'lista', perfis: ['discente'] },
+      { id: 'gestao', rotulo: 'Gestão de reservas', icone: 'calendario', perfis: ['funcionario', 'adm'] },
     ],
   },
   {
     titulo: 'Biblioteca',
     itens: [
-      /* NOVO: Item visível exclusivamente para funcionários */
-      { id: 'chaves', rotulo: 'Serviço de Chaves', icone: 'chave', apenasFuncionario: true },
-      { id: 'salas', rotulo: 'Salas', icone: 'porta', emBreve: true },
-      { id: 'discentes', rotulo: 'Discentes', icone: 'pessoas', emBreve: true },
+      { id: 'chaves', rotulo: 'Serviço de Chaves', icone: 'chave', perfis: ['funcionario'] },
+      { id: 'salas', rotulo: 'Salas', icone: 'porta', emBreve: true, perfis: ['adm'] },
+      { id: 'discentes', rotulo: 'Discentes', icone: 'pessoas', emBreve: true, perfis: ['adm'] },
     ],
   },
   {
     titulo: 'Conta',
     itens: [
-      { id: 'notificacoes', rotulo: 'Notificações', icone: 'sino', emBreve: true, badge: true },
-      { id: 'sair', rotulo: 'Sair', icone: 'sair', acao: 'sair' },
+      { id: 'notificacoes', rotulo: 'Notificações', icone: 'sino', emBreve: true, badge: true, perfis: TODOS },
+      { id: 'sair', rotulo: 'Sair', icone: 'sair', acao: 'sair', perfis: TODOS },
     ],
   },
 ]
+
+const ROTULOS_PERFIL = {
+  discente: 'Discente',
+  funcionario: 'Funcionário',
+  adm: 'Administrador',
+}
 
 const ICONES = {
   casa: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
@@ -38,7 +46,6 @@ const ICONES = {
     'M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1 M9.5 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z M21 19v-1a4 4 0 0 0-3-3.9 M16 4.1a3.5 3.5 0 0 1 0 6.8',
   sino: 'M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8 M10 21h4',
   sair: 'M15 4h4v16h-4 M10 17l5-5-5-5 M15 12H4',
-  /* NOVO: Ícone SVG de chave */
   chave: 'M21 2l-6 6M15.5 7.5l2.5 2.5M13 10l2.5 2.5M10 14a5 5 0 1 1-7-7 5 5 0 0 1 7 7z',
 }
 
@@ -51,7 +58,8 @@ function Icone({ nome }) {
 }
 
 export default function MenuLateral({ usuario, pagina, irPara, naoLidos, sair }) {
-  const tipo = usuario.perfil === 'funcionario' ? 'Funcionário' : 'Discente'
+  const perfil = usuario.perfil || 'discente'
+  const tipo = ROTULOS_PERFIL[perfil] ?? 'Discente'
   const iniciais = (usuario.nome || usuario.email)
     .split(' ')
     .filter(Boolean)
@@ -63,6 +71,11 @@ export default function MenuLateral({ usuario, pagina, irPara, naoLidos, sair })
     if (item.acao === 'sair') sair()
     else irPara(item.ir ?? item.id)
   }
+
+  const secoesVisiveis = SECOES.map((secao) => ({
+    ...secao,
+    itens: secao.itens.filter((item) => item.perfis.includes(perfil)),
+  })).filter((secao) => secao.itens.length > 0)
 
   return (
     <aside className="menu-lateral">
@@ -80,31 +93,28 @@ export default function MenuLateral({ usuario, pagina, irPara, naoLidos, sair })
       </div>
 
       <nav className="menu-secoes" aria-label="Principal">
-        {SECOES.map((secao) => (
+        {secoesVisiveis.map((secao) => (
           <div className="menu-secao" key={secao.titulo}>
             <h3>{secao.titulo}</h3>
             <div className="menu-itens">
-              {/* ATUALIZADO: Filtra os itens ignorando itens de funcionário caso seja discente */}
-              {secao.itens
-                .filter((item) => !item.apenasFuncionario || usuario.perfil === 'funcionario')
-                .map((item) => {
-                  const ativo = pagina === item.id
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className={ativo ? 'menu-item ativo' : 'menu-item'}
-                      disabled={item.emBreve}
-                      title={item.emBreve ? 'Em breve' : undefined}
-                      aria-current={ativo ? 'page' : undefined}
-                      onClick={() => acionar(item)}
-                    >
-                      <Icone nome={item.icone} />
-                      <span>{item.rotulo}</span>
-                      {item.badge && naoLidos > 0 && <span className="menu-badge">{naoLidos}</span>}
-                    </button>
-                  )
-                })}
+              {secao.itens.map((item) => {
+                const ativo = pagina === (item.ir ?? item.id)
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={ativo ? 'menu-item ativo' : 'menu-item'}
+                    disabled={item.emBreve}
+                    title={item.emBreve ? 'Em breve' : undefined}
+                    aria-current={ativo ? 'page' : undefined}
+                    onClick={() => acionar(item)}
+                  >
+                    <Icone nome={item.icone} />
+                    <span>{item.rotulo}</span>
+                    {item.badge && naoLidos > 0 && <span className="menu-badge">{naoLidos}</span>}
+                  </button>
+                )
+              })}
             </div>
           </div>
         ))}

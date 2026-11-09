@@ -10,6 +10,7 @@ import { authService } from './services/auth/index.js'
 import { contarAvisosNaoLidos } from './services/reservas/index.js'
 import './layout.css'
 import ServicoChaves from './pages/ServicoChaves.jsx'
+import GestaoReservas from './pages/GestaoReservas.jsx'
 
 export default function App() {
   const [tela, setTela] = useState('login')
@@ -78,11 +79,14 @@ export default function App() {
           {/* Renderiza o Serviço de Chaves */}
           {pagina === 'chaves' && <ServicoChaves usuario={usuario} />}
 
+          {pagina === 'gestao' && <GestaoReservas usuario={usuario} />}
+
           {/*Adicionado 'pagina !== "chaves"' para evitar sobreposição */}
           {pagina !== 'disponibilidade' && 
            pagina !== 'participantes' && 
            pagina !== 'minhas' && 
-           pagina !== 'chaves' && (
+           pagina !== 'chaves' &&
+           pagina !== 'gestao' && (
             <Inicio
               usuario={usuario}
               irPara={(destino) => {

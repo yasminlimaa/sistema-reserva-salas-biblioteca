@@ -8,7 +8,7 @@ Telas de login e cadastro de discente em React + Vite (JavaScript). Só o front:
 npm install
 cp .env.example .env.local
 npm run dev
-```
+```npm run 
 
 Com `VITE_AUTH_PROVIDER=mock` (padrão) o sistema roda sem backend e sem banco, só para ver as telas e o fluxo.
 

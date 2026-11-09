@@ -3,7 +3,7 @@ import './Inicio.css'
 import { dataDe, formatarData, formatarDataHora, horaDe, situacaoReserva } from '../lib/datas.js'
 import { listarAvisos, listarReservas } from '../services/reservas/index.js'
 
-export default function Inicio({ usuario, irPara, mensagemSucesso }) {
+export default function Inicio({ usuario, mensagemSucesso }) {
   const tipo = usuario.perfil === 'funcionario' ? 'Funcionário' : 'Discente'
   const [reservas, setReservas] = useState(null)
   const [avisos, setAvisos] = useState(null)
@@ -22,13 +22,6 @@ export default function Inicio({ usuario, irPara, mensagemSucesso }) {
       <p>O que você quer fazer hoje?</p>
 
       {mensagemSucesso && <p className="inicio-sucesso" role="status">{mensagemSucesso}</p>}
-
-      <div className="inicio-atalhos">
-        <button type="button" className="inicio-atalho" onClick={() => irPara('disponibilidade')}>
-          <strong>Nova reserva</strong>
-          <span>Veja os horários livres e escolha sua sala</span>
-        </button>
-      </div>
 
       <section className="inicio-bloco">
         <h2>Próximas reservas</h2>

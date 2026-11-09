@@ -138,7 +138,7 @@ export default function Participantes({ usuario, reserva, onVoltar, onConfirmar 
       <section className="resumo-reserva">
         <span className="resumo-rotulo">Resumo da reserva</span>
         <h2>{reserva.sala.nome}</h2>
-        <p>Piso {reserva.sala.piso}{reserva.sala.bloco ? ` · ${reserva.sala.bloco}` : ''}</p>
+        {reserva.sala.bloco && <p>{reserva.sala.bloco}</p>}
         <dl>
           <div><dt>Data</dt><dd>{formatarData(reserva.data)}</dd></div>
           <div><dt>Horário</dt><dd>{reserva.inicio} – {reserva.fim}</dd></div>

@@ -1,0 +1,168 @@
+.gestao {
+  display: grid;
+  gap: 16px;
+}
+
+.gestao-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.gestao-cabecalho > div > span {
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+.gestao-cabecalho h1 {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 4px 0 6px;
+}
+
+.gestao-cabecalho p {
+  font-size: 15px;
+  color: var(--texto-suave);
+}
+
+.gestao-data {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  width: 180px;
+}
+
+.gestao-sucesso,
+.gestao-erro,
+.gestao-vazio,
+.gestao-carregando {
+  font-size: 14px;
+  padding: 12px 14px;
+  border-radius: var(--raio);
+}
+
+.gestao-sucesso {
+  background: #e6f0ec;
+  color: var(--verde);
+}
+
+.gestao-erro {
+  background: #fdecea;
+  color: var(--erro);
+}
+
+.gestao-vazio,
+.gestao-carregando {
+  color: var(--texto-suave);
+  background: var(--branco);
+  border: 1px dashed var(--borda);
+}
+
+.gestao-tabela-wrap {
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.gestao-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.gestao-tabela th,
+.gestao-tabela td {
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid #edefe9;
+  white-space: nowrap;
+}
+
+.gestao-tabela th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-suave);
+  background: #f7f8f5;
+}
+
+.gestao-tabela tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.gestao-situacao,
+.gestao-chave {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.gestao-situacao.confirmada {
+  background: #e3f4ec;
+  color: var(--verde);
+}
+
+.gestao-situacao.cancelada {
+  background: #fdecea;
+  color: var(--erro);
+}
+
+.chave-na-recepcao {
+  background: #E4EEF9;
+  color: #1F4E79;
+}
+
+.chave-retirada {
+  background: #E3F5EA;
+  color: #1E6B3A;
+}
+
+.chave-atrasada {
+  background: #FDE7E5;
+  color: #8A1C12;
+}
+
+.chave-devolvida {
+  background: #EFE9FA;
+  color: #5B3E9E;
+}
+
+.gestao-acao {
+  text-align: right;
+}
+
+.gestao-cancelar {
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--erro);
+  border-radius: var(--raio);
+  background: var(--branco);
+  color: var(--erro);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gestao-cancelar:hover:not(:disabled) {
+  background: #fdecea;
+}
+
+.gestao-cancelar:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

@@ -92,32 +92,6 @@
   font-size: 13px;
 }
 
-.disp-pisos {
-  display: flex;
-  height: 44px;
-  padding: 3px;
-  border-radius: var(--raio);
-  background: #e5e8e1;
-}
-
-.filtro-piso {
-  border: 0;
-  border-radius: 6px;
-  padding: 0 12px;
-  background: transparent;
-  color: var(--texto-suave);
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.filtro-piso.ativo {
-  background: var(--branco);
-  color: var(--texto);
-  font-weight: 600;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-}
-
 /* Grade de disponibilidade */
 
 .disp-grade {
@@ -441,14 +415,6 @@
 
   .disp-filtros .field:first-child {
     width: 100%;
-  }
-
-  .disp-pisos {
-    width: 100%;
-  }
-
-  .filtro-piso {
-    flex: 1;
   }
 
   .disp-grade {
