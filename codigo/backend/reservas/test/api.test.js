@@ -48,3 +48,46 @@ test('readiness indica indisponibilidade sem expor erro do driver', async (t) =>
   assert.equal(response.statusCode, 503);
   assert.doesNotMatch(response.body, /senha-ficticia/);
 });
+
+test('integração HTTP com o serviço de Salas valida sala ativa, recusa inativa e retorna 503 em falha', async (t) => {
+  const pool = {
+    query() { throw new Error('Não deveria consultar o banco quando a sala é recusada ou Salas falha'); },
+    connect() { throw new Error('Não deveria abrir transação'); },
+  };
+  let remoteStatus = 200;
+  let remoteBody = { sala_id: rooms[0].id, nome: 'Sala 01', ativa: false };
+  let networkFailure = false;
+
+  const remoteDirectory = createDemoAdapter(
+    { ...env, SALAS_API_URL: 'http://salas.local' },
+    {
+      async fetchImpl() {
+        if (networkFailure) throw new Error('ECONNREFUSED');
+        return {
+          status: remoteStatus,
+          ok: remoteStatus >= 200 && remoteStatus < 300,
+          async json() { return remoteBody; },
+        };
+      },
+    },
+  );
+  const app = buildApp({ pool, directory: remoteDirectory });
+  t.after(() => app.close());
+  const headers = { authorization: `Bearer ${env.DEMO_TOKEN_DISCENTE_A}` };
+
+  // Sala desativada no serviço de Salas -> 422 SALA_INVALIDA
+  const inactiveRes = await app.inject({ method: 'POST', url: '/reservas', headers, payload: body });
+  assert.equal(inactiveRes.statusCode, 422);
+  assert.equal(inactiveRes.json().codigo, 'SALA_INVALIDA');
+
+  // Sala inexistente (404) no serviço de Salas -> 422 SALA_INVALIDA
+  remoteStatus = 404;
+  const missingRes = await app.inject({ method: 'POST', url: '/reservas', headers, payload: body });
+  assert.equal(missingRes.statusCode, 422);
+
+  // Falha de rede/timeout no serviço de Salas -> 503 DEPENDENCIA_INDISPONIVEL (sem fallback silencioso)
+  networkFailure = true;
+  const unavailableRes = await app.inject({ method: 'POST', url: '/reservas', headers, payload: body });
+  assert.equal(unavailableRes.statusCode, 503);
+  assert.equal(unavailableRes.json().codigo, 'DEPENDENCIA_INDISPONIVEL');
+});
