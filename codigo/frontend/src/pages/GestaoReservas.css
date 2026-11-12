@@ -32,7 +32,34 @@
   gap: 6px;
   font-size: 14px;
   font-weight: 600;
-  width: 180px;
+}
+
+.gestao-data-controle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gestao-data-controle .input {
+  width: 170px;
+  height: 44px;
+}
+
+.gestao-seta {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--branco);
+  color: var(--texto);
+  cursor: pointer;
+}
+
+.gestao-seta:hover {
+  border-color: var(--verde);
+  color: var(--verde);
 }
 
 .gestao-sucesso,

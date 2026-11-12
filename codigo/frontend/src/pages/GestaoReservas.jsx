@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import Dialogo from '../components/Dialogo.jsx'
 import { formatarData, horaDe } from '../lib/datas.js'
 import { cancelarReservaDemo, listarTodasReservas, statusChaveDaReserva } from '../services/reservas/index.js'
 import './GestaoReservas.css'
@@ -16,6 +17,12 @@ function hojeLocal(d = new Date()) {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }
 
+// Soma dias a uma data 'AAAA-MM-DD' sem depender de fuso horário.
+function somarDias(iso, dias) {
+  const [ano, mes, dia] = iso.split('-').map(Number)
+  return hojeLocal(new Date(ano, mes - 1, dia + dias))
+}
+
 function agoraLocal(d = new Date()) {
   return `${hojeLocal(d)}T${p(d.getHours())}:${p(d.getMinutes())}`
 }
@@ -26,6 +33,7 @@ export default function GestaoReservas({ usuario }) {
   const [mensagem, setMensagem] = useState('')
   const [erro, setErro] = useState('')
   const [cancelando, setCancelando] = useState(null)
+  const [paraCancelar, setParaCancelar] = useState(null)
 
   const carregar = useCallback(async () => {
     const lista = await listarTodasReservas(data)
@@ -44,9 +52,6 @@ export default function GestaoReservas({ usuario }) {
   }, [carregar])
 
   async function cancelar(reserva) {
-    const texto = `${reserva.salaNome}, ${formatarData(reserva.inicio.slice(0, 10))}, ${horaDe(reserva.inicio)} – ${horaDe(reserva.fim)}`
-    if (!window.confirm(`Cancelar a reserva de ${texto}? O horário será liberado.`)) return
-
     setCancelando(reserva.id)
     setMensagem('')
     setErro('')
@@ -73,15 +78,39 @@ export default function GestaoReservas({ usuario }) {
           <h1>Gestão de reservas</h1>
           <p>Cancele reservas e acompanhe a situação das chaves.</p>
         </div>
-        <label className="gestao-data">
-          Data
-          <input
-            type="date"
-            className="input"
-            value={data}
-            onChange={(e) => setData(e.target.value)}
-          />
-        </label>
+        <div className="gestao-data">
+          <span className="gestao-data-rotulo">Data</span>
+          <div className="gestao-data-controle">
+            <button
+              type="button"
+              className="gestao-seta"
+              aria-label="Dia anterior"
+              onClick={() => setData((atual) => somarDias(atual, -1))}
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M14 5l-7 7 7 7 M7 12h11" />
+              </svg>
+            </button>
+            <input
+              id="gestao-data"
+              type="date"
+              className="input"
+              value={data}
+              onChange={(e) => setData(e.target.value)}
+              aria-label="Data das reservas"
+            />
+            <button
+              type="button"
+              className="gestao-seta"
+              aria-label="Próximo dia"
+              onClick={() => setData((atual) => somarDias(atual, 1))}
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M10 5l7 7-7 7 M6 12h11" />
+              </svg>
+            </button>
+          </div>
+        </div>
       </header>
 
       {mensagem && <p className="gestao-sucesso" role="status">{mensagem}</p>}
@@ -128,7 +157,7 @@ export default function GestaoReservas({ usuario }) {
                           type="button"
                           className="gestao-cancelar"
                           disabled={cancelando === r.id}
-                          onClick={() => cancelar(r)}
+                          onClick={() => setParaCancelar(r)}
                         >
                           {cancelando === r.id ? 'Cancelando…' : 'Cancelar'}
                         </button>
@@ -140,6 +169,26 @@ export default function GestaoReservas({ usuario }) {
             </tbody>
           </table>
         </div>
+      )}
+
+      {paraCancelar && (
+        <Dialogo
+          titulo="Cancelar reserva?"
+          mensagem={
+            <>
+              <strong>{paraCancelar.salaNome}</strong>, {formatarData(paraCancelar.inicio.slice(0, 10))}, das{' '}
+              {horaDe(paraCancelar.inicio)} às {horaDe(paraCancelar.fim)}. O horário será liberado.
+            </>
+          }
+          textoConfirmar="Sim, cancelar"
+          textoVoltar="Manter reserva"
+          aoFechar={() => setParaCancelar(null)}
+          aoConfirmar={() => {
+            const reserva = paraCancelar
+            setParaCancelar(null)
+            cancelar(reserva)
+          }}
+        />
       )}
     </div>
   )

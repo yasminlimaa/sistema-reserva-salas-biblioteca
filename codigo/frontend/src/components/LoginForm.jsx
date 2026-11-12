@@ -14,7 +14,7 @@ const PERFIS = [
   {
     valor: 'funcionario',
     rotulo: 'Funcionário',
-    placeholder: 'nome@ufma.br',
+    placeholder: 'funcionario@ufma.br',
     rotuloCadastro: 'Criar cadastro de funcionário',
   },
 ]

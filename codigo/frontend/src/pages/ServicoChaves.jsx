@@ -6,6 +6,14 @@ import {
   registrarDevolucaoChave 
 } from '../services/reservas/index.js'
 import './ServicoChaves.css'
+import './ServicoChavesData.css'
+
+const p = (n) => String(n).padStart(2, '0')
+const hojeLocal = (d = new Date()) => `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+const somarDias = (iso, dias) => {
+  const [ano, mes, dia] = iso.split('-').map(Number)
+  return hojeLocal(new Date(ano, mes - 1, dia + dias))
+}
 
 export default function ServicoChaves({ usuario }) {
   const perfilAtual = usuario?.perfil || localStorage.getItem('user_perfil') || 'funcionario'
@@ -15,12 +23,12 @@ export default function ServicoChaves({ usuario }) {
   const [carregando, setCarregando] = useState(true)
   const [buscaMatricula, setBuscaMatricula] = useState('')
   const [modalItem, setModalItem] = useState(null)
+  const [data, setData] = useState(hojeLocal)
 
   const carregarChaves = async () => {
     setCarregando(true)
     try {
-      const hoje = new Date().toISOString().slice(0, 10)
-      const lista = await listarServicoChavesDoDia(hoje)
+      const lista = await listarServicoChavesDoDia(data)
       setChaves(lista)
     } catch (err) {
       console.error('Erro ao carregar claviculário:', err)
@@ -33,7 +41,7 @@ export default function ServicoChaves({ usuario }) {
     carregarChaves()
     const interval = setInterval(carregarChaves, 60000)
     return () => clearInterval(interval)
-  }, [])
+  }, [data])
 
   const handleRegistrarRetirada = async (reservaId) => {
     if (!reservaId) return
@@ -82,10 +90,45 @@ export default function ServicoChaves({ usuario }) {
       {/* Topo / Header */}
       <div className="chaves-header">
         <div className="chaves-title-group">
-          <span className="chaves-subtitle">
-            {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' })} · Claviculário
-          </span>
-          <h1 className="chaves-heading">Chaves de hoje</h1>
+          <h1 className="chaves-heading">{data === hojeLocal() ? 'Chaves de hoje' : 'Chaves do dia'}</h1>
+        </div>
+
+        <div className="chaves-data-controle">
+          <span className="chaves-data-rotulo">Data</span>
+          <div className="chaves-data-linha">
+            <button
+              type="button"
+              className="chaves-data-seta"
+              aria-label="Dia anterior"
+              onClick={() => setData((atual) => somarDias(atual, -1))}
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M14 5l-7 7 7 7 M7 12h11" />
+              </svg>
+            </button>
+            <input
+              type="date"
+              className="chaves-data-input"
+              value={data}
+              onChange={(e) => e.target.value && setData(e.target.value)}
+              aria-label="Data do claviculário"
+            />
+            <button
+              type="button"
+              className="chaves-data-seta"
+              aria-label="Próximo dia"
+              onClick={() => setData((atual) => somarDias(atual, 1))}
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M10 5l7 7-7 7 M6 12h11" />
+              </svg>
+            </button>
+          </div>
+          {data !== hojeLocal() && (
+            <button type="button" className="chaves-data-hoje" onClick={() => setData(hojeLocal())}>
+              Voltar para hoje
+            </button>
+          )}
         </div>
 
         <div className="chaves-search-box">

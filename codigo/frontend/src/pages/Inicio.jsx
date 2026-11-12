@@ -1,19 +1,22 @@
 import { useEffect, useState } from 'react'
 import './Inicio.css'
 import { dataDe, formatarData, formatarDataHora, horaDe, situacaoReserva } from '../lib/datas.js'
-import { listarAvisos, listarReservas } from '../services/reservas/index.js'
+import { listarAvisos, listarReservas, listarTodasReservas } from '../services/reservas/index.js'
 
 export default function Inicio({ usuario, mensagemSucesso }) {
-  const tipo = usuario.perfil === 'funcionario' ? 'Funcionário' : 'Discente'
+  const ehFuncionario = usuario.perfil === 'funcionario'
+  const tipo = ehFuncionario ? 'Funcionário' : 'Discente'
   const [reservas, setReservas] = useState(null)
   const [avisos, setAvisos] = useState(null)
 
   useEffect(() => {
-    listarReservas(usuario.id).then((lista) =>
+    // Funcionário acompanha as reservas feitas pelos discentes; discente vê as próprias.
+    const busca = ehFuncionario ? listarTodasReservas() : listarReservas(usuario.id)
+    busca.then((lista) =>
       setReservas(lista.filter((r) => situacaoReserva(r).chave === 'confirmada')),
     )
     listarAvisos(usuario.id).then(setAvisos)
-  }, [usuario.id])
+  }, [usuario.id, ehFuncionario])
 
   return (
     <div className="inicio">
@@ -24,9 +27,13 @@ export default function Inicio({ usuario, mensagemSucesso }) {
       {mensagemSucesso && <p className="inicio-sucesso" role="status">{mensagemSucesso}</p>}
 
       <section className="inicio-bloco">
-        <h2>Próximas reservas</h2>
+        <h2>{ehFuncionario ? 'Próximas reservas dos discentes' : 'Próximas reservas'}</h2>
         {reservas === null && <p className="inicio-vazio">Carregando…</p>}
-        {reservas?.length === 0 && <p className="inicio-vazio">Você não tem reservas futuras.</p>}
+        {reservas?.length === 0 && (
+          <p className="inicio-vazio">
+            {ehFuncionario ? 'Nenhuma reserva de discentes futura.' : 'Você não tem reservas futuras.'}
+          </p>
+        )}
         {reservas?.slice(0, 3).map((r) => (
           <div key={r.id} className="inicio-item">
             <div>
@@ -34,6 +41,9 @@ export default function Inicio({ usuario, mensagemSucesso }) {
               <span>
                 {formatarData(dataDe(r.inicio))} · {horaDe(r.inicio)} – {horaDe(r.fim)}
               </span>
+              {ehFuncionario && (
+                <small>Responsável: {r.participantes.find((p) => p.id === r.responsavelId)?.nome ?? '—'}</small>
+              )}
             </div>
           </div>
         ))}

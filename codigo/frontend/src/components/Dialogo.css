@@ -1,0 +1,103 @@
+.dialogo-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(21, 35, 30, 0.45);
+  animation: dialogo-fade 0.15s ease-out;
+}
+
+.dialogo {
+  width: 100%;
+  max-width: 420px;
+  padding: 28px;
+  border-radius: 16px;
+  background: var(--branco);
+  box-shadow: 0 24px 48px rgba(21, 35, 30, 0.25);
+  animation: dialogo-sobe 0.18s ease-out;
+}
+
+.dialogo-icone {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 16px;
+  border-radius: 50%;
+  background: #fde7e5;
+  color: #b42318;
+}
+
+.dialogo h2 {
+  margin-bottom: 8px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.dialogo p {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--texto-suave);
+}
+
+.dialogo-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.dialogo-acoes button {
+  height: 44px;
+  padding: 0 18px;
+  border-radius: var(--raio);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dialogo-secundario {
+  border: 1px solid var(--verde);
+  background: var(--branco);
+  color: var(--verde);
+}
+
+.dialogo-secundario:hover {
+  background: #f3f8f6;
+}
+
+.dialogo-perigo {
+  border: 0;
+  background: #b42318;
+  color: #fff;
+}
+
+.dialogo-perigo:hover {
+  background: #912018;
+}
+
+.dialogo-secundario:focus-visible,
+.dialogo-perigo:focus-visible {
+  outline: 2px solid rgba(15, 107, 91, 0.35);
+  outline-offset: 2px;
+}
+
+@keyframes dialogo-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dialogo-sobe {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 480px) {
+  .dialogo-acoes button {
+    flex: 1;
+  }
+}

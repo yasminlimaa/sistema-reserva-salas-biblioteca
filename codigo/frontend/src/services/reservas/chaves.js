@@ -1,6 +1,13 @@
 import { SALAS } from './mock.js'
 
 const CHAVE_RESERVAS = 'demo-reservas'
+
+// Data de hoje no fuso local, no formato AAAA-MM-DD (toISOString usaria UTC e pode errar o dia à noite).
+function hojeLocalISO() {
+  const agora = new Date()
+  const p = (n) => String(n).padStart(2, '0')
+  return `${agora.getFullYear()}-${p(agora.getMonth() + 1)}-${p(agora.getDate())}`
+}
 const CHAVE_SERVICO_CHAVES = 'demo-chaves-status'
 
 function lerReservas() {
@@ -26,9 +33,10 @@ function salvarStatusChaves(dados) {
 export async function listarServicoChavesDoDia(dataFiltro) {
   const dados = lerReservas()
   const statusChaves = lerStatusChaves()
-  const dataAlvo = dataFiltro || new Date().toISOString().slice(0, 10)
+  const dataAlvo = dataFiltro || hojeLocalISO()
   const agora = new Date()
   const horaAtualMinutos = agora.getHours() * 60 + agora.getMinutes()
+  const hojeLocal = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`
 
   const reservasDoDia = dados.reservas.filter((r) => {
     const dataReserva = r.inicio.slice(0, 10)
@@ -53,7 +61,8 @@ export async function listarServicoChavesDoDia(dataFiltro) {
       let statusFinal = registroChave.status
       let atrasoMinutos = 0
 
-      if (statusFinal === 'retirada') {
+      // Atraso só faz sentido no dia de hoje: em outras datas, compara com a hora atual seria enganoso.
+      if (statusFinal === 'retirada' && dataAlvo === hojeLocalISO()) {
         const [hFim, mFim] = fimHora.split(':').map(Number)
         const minutosFim = hFim * 60 + mFim
         if (horaAtualMinutos > minutosFim) {
@@ -85,7 +94,7 @@ export async function listarServicoChavesDoDia(dataFiltro) {
       reservaId: null,
       salaId: sala.id,
       sala: sala.nome,
-      horario: 'Sem reserva hoje',
+      horario: 'Sem reserva neste dia',
       horarioFim: null,
       responsavel: sala.emManutencao ? 'Em manutenção' : 'Disponível no claviculário',
       matricula: '—',

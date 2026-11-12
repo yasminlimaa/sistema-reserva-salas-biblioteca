@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { formatarData, horaDe, situacaoReserva } from '../lib/datas.js'
+import Dialogo from '../components/Dialogo.jsx'
 import { cancelarReservaDemo, listarReservas } from '../services/reservas/index.js'
 import './MinhasReservas.css'
 
@@ -43,6 +44,7 @@ export default function MinhasReservas({ usuario }) {
   const [mensagem, setMensagem] = useState('')
   const [erro, setErro] = useState('')
   const [cancelando, setCancelando] = useState(null)
+  const [paraCancelar, setParaCancelar] = useState(null)
 
   const carregar = useCallback(async () => {
     setReservas(await listarReservas(usuario.id))
@@ -62,9 +64,6 @@ export default function MinhasReservas({ usuario }) {
   }, [reservas])
 
   async function cancelar(reserva) {
-    const descricao = `${reserva.salaNome}, ${formatarData(reserva.inicio.slice(0, 10))}, ${horaDe(reserva.inicio)} – ${horaDe(reserva.fim)}`
-    if (!window.confirm(`Cancelar a reserva de demonstração em ${descricao}?`)) return
-
     setCancelando(reserva.id)
     setMensagem('')
     setErro('')
@@ -90,7 +89,7 @@ export default function MinhasReservas({ usuario }) {
                 key={reserva.id}
                 reserva={reserva}
                 usuario={usuario}
-                onCancelar={cancelar}
+                onCancelar={setParaCancelar}
                 cancelando={cancelando === reserva.id}
               />
             ))}
@@ -118,6 +117,26 @@ export default function MinhasReservas({ usuario }) {
           {secao('Histórico', grupos.historico, 'Nenhuma reserva concluída até o momento.')}
           {secao('Canceladas', grupos.canceladas, 'Nenhuma reserva cancelada.')}
         </>
+      )}
+
+      {paraCancelar && (
+        <Dialogo
+          titulo="Cancelar reserva?"
+          mensagem={
+            <>
+              <strong>{paraCancelar.salaNome}</strong>, {formatarData(paraCancelar.inicio.slice(0, 10))}, das{' '}
+              {horaDe(paraCancelar.inicio)} às {horaDe(paraCancelar.fim)}. O horário será liberado.
+            </>
+          }
+          textoConfirmar="Sim, cancelar"
+          textoVoltar="Manter reserva"
+          aoFechar={() => setParaCancelar(null)}
+          aoConfirmar={() => {
+            const reserva = paraCancelar
+            setParaCancelar(null)
+            cancelar(reserva)
+          }}
+        />
       )}
     </div>
   )

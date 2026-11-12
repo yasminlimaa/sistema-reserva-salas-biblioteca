@@ -68,7 +68,7 @@ export default function App() {
               onVoltar={() => setPagina('disponibilidade')}
               onConfirmar={() => {
                 setRascunhoReserva(null)
-                setMensagemSucesso('Reserva de demonstração local confirmada. Ela foi salva somente neste navegador.')
+                setMensagemSucesso('Reserva confirmada.')
                 setPagina('inicio')
               }}
             />
