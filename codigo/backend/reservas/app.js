@@ -54,7 +54,7 @@ export function buildApp({ pool, directory, logger = false }) {
     }, async (request) => {
       const { sala_id, inicio, fim } = request.query;
       validateInterval(inicio, fim);
-      await directory.validateRoom(sala_id);
+      await directory.validateRoom(sala_id.toLowerCase(), request.headers.authorization);
       return { sala_id, inicio, fim, disponivel: await repository.available(sala_id, inicio, fim),
         aviso: 'Consulta de sala não garante criação nem valida conflitos dos participantes.' };
     });
@@ -75,7 +75,7 @@ export function buildApp({ pool, directory, logger = false }) {
         participante_ids: request.body.participante_ids.map((id) => id.toLowerCase()) };
       validateInterval(input.inicio, input.fim);
       validateParticipants(input.participante_ids, request.actor.id);
-      await directory.validateRoom(input.sala_id);
+      await directory.validateRoom(input.sala_id, request.headers.authorization);
       await directory.validateStudents(input.participante_ids);
       const reservation = await repository.create(input, request.actor.id, request.id);
       return reply.code(201).header('location', `/reservas/${reservation.reserva_id}`).send(reservation);
