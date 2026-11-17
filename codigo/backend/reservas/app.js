@@ -76,19 +76,40 @@ export function buildApp({ pool, directory, logger = false }) {
       validateInterval(input.inicio, input.fim);
       validateParticipants(input.participante_ids, request.actor.id);
       await directory.validateRoom(input.sala_id, request.headers.authorization);
-      await directory.validateStudents(input.participante_ids);
+      await directory.validateStudents(input.participante_ids, request.headers.authorization);
       const reservation = await repository.create(input, request.actor.id, request.id);
       return reply.code(201).header('location', `/reservas/${reservation.reserva_id}`).send(reservation);
     });
 
+    // Grade de ocupação de todas as salas em uma data (atende Disponibilidade.jsx sem expor participantes).
+    authenticated.get('/ocupacao', {
+      schema: { querystring: {
+        type: 'object', additionalProperties: false, required: ['data'],
+        properties: { data: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' } },
+      } },
+    }, async (request) => ({
+      data: request.query.data,
+      ocupacoes: await repository.occupationByDate(request.query.data),
+    }));
+
     authenticated.get('/reservas', {
       schema: { querystring: {
         type: 'object', additionalProperties: false,
-        properties: { sala_id: uuid, limite: { type: 'integer', minimum: 1, maximum: 100, default: 50 },
-          offset: { type: 'integer', minimum: 0, default: 0 } },
+        properties: {
+          sala_id: uuid,
+          data: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+          limite: { type: 'integer', minimum: 1, maximum: 100, default: 50 },
+          offset: { type: 'integer', minimum: 0, default: 0 },
+        },
       } },
     }, async (request) => ({
-      reservas: await repository.list(request.actor, request.query.sala_id, request.query.limite, request.query.offset),
+      reservas: await repository.list(
+        request.actor,
+        request.query.sala_id,
+        request.query.limite,
+        request.query.offset,
+        request.query.data,
+      ),
       limite: request.query.limite, offset: request.query.offset,
     }));
 
