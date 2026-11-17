@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { ServiceError } from './domain.js';
 import { createSalasClient } from './salas-client.js';
+import { createUsuariosClient } from './usuarios-client.js';
 
 // Adaptador explicitamente fictício. Não consulta cadastros reais e não é autenticação de produção.
 export const students = ['a', 'b', 'c', 'd', 'e', 'f'].map((letter, i) => ({
@@ -33,9 +34,12 @@ export function createDemoAdapter(env = process.env, { fetchImpl } = {}) {
   if (new Set(identities.map(([token]) => token.toString())).size !== identities.length) {
     throw new Error('Os tokens da demo devem ser distintos.');
   }
-  // Quando SALAS_API_URL está definida, valida a sala consultando o serviço de Salas via HTTP.
+  // Quando SALAS_API_URL ou USUARIOS_API_URL estão definidas, consulta os serviços correspondentes via HTTP.
   const salasClient = env.SALAS_API_URL
     ? createSalasClient(env.SALAS_API_URL, { fetchImpl, serviceToken: env.DEMO_TOKEN_FUNCIONARIO })
+    : null;
+  const usuariosClient = env.USUARIOS_API_URL
+    ? createUsuariosClient(env.USUARIOS_API_URL, { fetchImpl, serviceToken: env.DEMO_TOKEN_FUNCIONARIO })
     : null;
   return {
     authenticate(header) {
@@ -46,6 +50,7 @@ export function createDemoAdapter(env = process.env, { fetchImpl } = {}) {
           if (token.length === supplied.length && timingSafeEqual(token, supplied)) return user;
         }
       }
+      if (usuariosClient) return usuariosClient.authenticate(header);
       throw new ServiceError(401, 'NAO_AUTENTICADO', 'Token de demonstração ausente ou inválido.');
     },
     async validateRoom(id, authorization) {
@@ -54,7 +59,8 @@ export function createDemoAdapter(env = process.env, { fetchImpl } = {}) {
       if (!room || !room.ativa) throw new ServiceError(422, 'SALA_INVALIDA', 'Sala fictícia inexistente ou inativa.');
       return room;
     },
-    async validateStudents(ids) {
+    async validateStudents(ids, authorization) {
+      if (usuariosClient) return usuariosClient.validateStudents(ids, authorization);
       if (ids.some((id) => !students.some((user) => user.id === id && user.ativo))) {
         throw new ServiceError(422, 'DISCENTE_INVALIDO', 'Todos os participantes devem ser discentes fictícios ativos do catálogo.');
       }

@@ -57,14 +57,27 @@ export function createRepository(pool) {
       ) AS disponivel`, [roomId, inicio, fim]);
       return row.disponivel;
     },
-    async list(actor, roomId, limit = 50, offset = 0) {
+    async occupationByDate(data) {
       const { rows } = await pool.query(`
-        SELECT r.* FROM reservas.reservas r
+        SELECT r.reserva_id, r.sala_id, r.inicio, r.fim
+        FROM reservas.reservas r
+        WHERE r.status = 'confirmada'
+          AND (r.inicio AT TIME ZONE 'America/Fortaleza')::date = $1::date
+        ORDER BY r.inicio, r.reserva_id
+      `, [data]);
+      return rows;
+    },
+    async list(actor, roomId, limit = 50, offset = 0, data = null) {
+      const { rows } = await pool.query(`
+        SELECT r.*, ARRAY(SELECT p.discente_id FROM reservas.reserva_participantes p
+                          WHERE p.reserva_id = r.reserva_id ORDER BY p.discente_id) AS participante_ids
+        FROM reservas.reservas r
         WHERE ($1::boolean OR EXISTS (SELECT 1 FROM reservas.reserva_participantes p
                                       WHERE p.reserva_id = r.reserva_id AND p.discente_id = $2))
           AND ($3::uuid IS NULL OR r.sala_id = $3)
+          AND ($6::date IS NULL OR (r.inicio AT TIME ZONE 'America/Fortaleza')::date = $6::date)
         ORDER BY r.inicio, r.reserva_id LIMIT $4 OFFSET $5
-      `, [actor.perfil === 'funcionario', actor.id, roomId || null, limit, offset]);
+      `, [actor.perfil === 'funcionario', actor.id, roomId || null, limit, offset, data || null]);
       return rows;
     },
     create(input, actorId, correlationId) {
