@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { buildApp } from '../app.js';
 import { createDemoAdapter, students, rooms } from '../demo.js';
+import { createSalasClient } from '../salas-client.js';
+import { createUsuariosClient } from '../usuarios-client.js';
 
 const env = { DEMO_MODE: 'true', NODE_ENV: 'test',
   DEMO_TOKEN_DISCENTE_A: 'a'.repeat(64), DEMO_TOKEN_DISCENTE_D: 'd'.repeat(64),
@@ -13,6 +15,66 @@ const body = { sala_id: rooms[0].id, inicio: '2070-01-01T15:00:00-03:00',
 test('demo não pode ser ativada em produção ou com tokens repetidos', () => {
   assert.throws(() => createDemoAdapter({ ...env, NODE_ENV: 'production' }));
   assert.throws(() => createDemoAdapter({ ...env, DEMO_TOKEN_DISCENTE_D: env.DEMO_TOKEN_DISCENTE_A }));
+});
+
+test('clientes de Usuários e Salas preservam erros de autenticação, domínio e indisponibilidade', async () => {
+  const ids = ['10000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000002'];
+  const actor = { id: ids[0], usuario_id: ids[0], perfil: 'discente', ativo: true };
+  let authorization;
+  const usuarios = createUsuariosClient('http://usuarios.local', { fetchImpl: async (_url, options) => {
+    authorization = options.headers.authorization;
+    return { status: 200, async json() { return actor; } };
+  } });
+  assert.deepEqual(await usuarios.authenticate('Bearer original'), actor);
+  assert.equal(authorization, 'Bearer original');
+
+  for (const [status, expected] of [[401, 401], [403, 403], [500, 503]]) {
+    const client = createUsuariosClient('http://usuarios.local', { fetchImpl: async () => ({ status, async json() { return {}; } }) });
+    await assert.rejects(() => client.authenticate('Bearer token'), { statusCode: expected });
+  }
+  for (const fetchImpl of [
+    async () => { throw new Error('ECONNREFUSED'); },
+    async () => { throw new DOMException('timeout', 'TimeoutError'); },
+    async () => ({ status: 200, async json() { return { id: 'forjado' }; } }),
+    async () => ({ status: 200, async json() { throw new Error('json'); } }),
+  ]) {
+    await assert.rejects(() => createUsuariosClient('http://usuarios.local', { fetchImpl }).authenticate('Bearer token'), { statusCode: 503 });
+  }
+
+  const validation = { validos: true, discentes: ids.map((id) => ({ id, perfil: 'discente', ativo: true })) };
+  const validator = createUsuariosClient('http://usuarios.local', { fetchImpl: async (_url, options) => {
+    authorization = options.headers.authorization;
+    return { status: 200, async json() { return validation; } };
+  } });
+  await validator.validateStudents(ids, 'Bearer original');
+  assert.equal(authorization, 'Bearer original');
+  for (const [status, expected] of [[400, 422], [422, 422], [401, 401], [403, 403], [503, 503]]) {
+    const client = createUsuariosClient('http://usuarios.local', { fetchImpl: async () => ({ status, async json() { return {}; } }) });
+    await assert.rejects(() => client.validateStudents(ids, 'Bearer token'), { statusCode: expected });
+  }
+
+  const salaId = rooms[0].id;
+  const sala = createSalasClient('http://salas.local', { fetchImpl: async (_url, options) => {
+    authorization = options.headers.authorization;
+    return { status: 200, async json() { return { sala_id: salaId, ativa: true }; } };
+  } });
+  await sala.validateRoom(salaId, 'Bearer original');
+  assert.equal(authorization, 'Bearer original');
+  for (const [status, expected] of [[401, 401], [403, 403], [404, 422], [422, 422], [503, 503]]) {
+    const client = createSalasClient('http://salas.local', { fetchImpl: async () => ({ status, async json() { return {}; } }) });
+    await assert.rejects(() => client.validateRoom(salaId, 'Bearer token'), { statusCode: expected });
+  }
+  for (const fetchImpl of [
+    async () => { throw new Error('ECONNREFUSED'); },
+    async () => { throw new DOMException('timeout', 'TimeoutError'); },
+    async () => ({ status: 200, async json() { throw new Error('json'); } }),
+  ]) {
+    await assert.rejects(() => createSalasClient('http://salas.local', { fetchImpl }).validateRoom(salaId, 'Bearer token'), { statusCode: 503 });
+  }
+  await assert.rejects(
+    () => createSalasClient('http://salas.local', { fetchImpl: async () => ({ status: 200, async json() { return { sala_id: salaId, ativa: false }; } }) }).validateRoom(salaId, 'Bearer token'),
+    { statusCode: 422 },
+  );
 });
 
 test('API rejeita entradas e acesso inválidos antes de tocar no banco', async (t) => {

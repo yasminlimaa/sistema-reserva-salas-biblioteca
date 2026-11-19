@@ -38,12 +38,12 @@ export default function LoginForm({ onSuccess, onIrParaCadastro }) {
 
     setEnviando(true)
     try {
-      const { usuario } = await authService.login({
+      const sessao = await authService.login({
         perfil,
         email: email.trim().toLowerCase(),
         senha,
       })
-      onSuccess(usuario)
+      onSuccess(sessao)
     } catch (err) {
       setErroGeral(err.message)
     } finally {

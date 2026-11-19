@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Field from '../components/Field.jsx'
 import { diaUtilAnteriorBiblioteca, formatarData, motivoReservaIndisponivel, normalizarDataReserva, proximoDiaUtilApos, proximoDiaUtilBiblioteca } from '../lib/datas.js'
-import { SALAS, listarOcupacao } from '../services/reservas/index.js'
+import { criarControleDeConsulta, disponibilidadeProvider } from '../services/disponibilidade/index.js'
 import './Disponibilidade.css'
 
 // Grade de 08h às 23h: cada coluna é uma hora.
@@ -30,13 +30,18 @@ function Seta({ direcao }) {
   )
 }
 
-export default function Disponibilidade({ onAvancar, selecaoInicial }) {
+export default function Disponibilidade({ onAvancar, selecaoInicial, token }) {
   const dataInicial = normalizarDataReserva(selecaoInicial?.data)
   const selecaoInicialValida = selecaoInicial?.data === dataInicial
     && !motivoReservaIndisponivel(dataInicial, selecaoInicial.inicio, selecaoInicial.fim)
   const [data, setData] = useState(dataInicial)
   const [faixa, setFaixa] = useState('3-6')
+  const [salas, setSalas] = useState(() => disponibilidadeProvider.salasIniciais)
   const [ocupacao, setOcupacao] = useState([])
+  const [carregandoSalas, setCarregandoSalas] = useState(disponibilidadeProvider.nome === 'api')
+  const [carregandoOcupacao, setCarregandoOcupacao] = useState(true)
+  const [erroSalas, setErroSalas] = useState('')
+  const [erroOcupacao, setErroOcupacao] = useState('')
   const [agora, setAgora] = useState(() => new Date())
   const [avisoData, setAvisoData] = useState('')
   const [selecao, setSelecao] = useState(() => (
@@ -52,18 +57,81 @@ export default function Disponibilidade({ onAvancar, selecaoInicial }) {
   const toqueInicial = useRef(null)
   const toquePendente = useRef(null)
   const primeiraConsulta = useRef(true)
+  const consultaOcupacao = useRef(criarControleDeConsulta())
+  const tokenAnterior = useRef(token)
+
+  function limparGestos() {
+    arrastando.current = null
+    toqueInicial.current = null
+    toquePendente.current = null
+  }
+
+  useEffect(() => {
+    const controller = new AbortController()
+    let ativa = true
+    if (tokenAnterior.current !== token) {
+      setSelecao(null)
+      limparGestos()
+    }
+    tokenAnterior.current = token
+    setCarregandoSalas(true)
+    setErroSalas('')
+
+    disponibilidadeProvider.listarSalas({ token, sinal: controller.signal })
+      .then((lista) => {
+        if (ativa) setSalas(lista)
+      })
+      .catch((erro) => {
+        if (ativa && erro?.name !== 'AbortError') {
+          setSalas([])
+          setSelecao(null)
+          limparGestos()
+          setErroSalas(erro?.message || 'Nao foi possivel carregar as salas.')
+        }
+      })
+      .finally(() => {
+        if (ativa) setCarregandoSalas(false)
+      })
+
+    return () => {
+      ativa = false
+      controller.abort()
+    }
+  }, [token])
 
   useEffect(() => {
     if (primeiraConsulta.current) primeiraConsulta.current = false
     else setSelecao(null)
-    toqueInicial.current = null
-    toquePendente.current = null
-    listarOcupacao(data).then((lista) =>
-      setOcupacao(
-        lista.map((r) => ({ salaId: r.salaId, ini: horaDeDT(r.inicio), fim: horaDeDT(r.fim) })),
-      ),
-    )
-  }, [data])
+    limparGestos()
+    const controller = new AbortController()
+    const consulta = consultaOcupacao.current.proxima()
+    let ativa = true
+    setCarregandoOcupacao(true)
+    setErroOcupacao('')
+    setOcupacao([])
+
+    disponibilidadeProvider.listarOcupacao({ token, data, sinal: controller.signal })
+      .then((lista) => {
+        if (ativa && consultaOcupacao.current.ehAtual(consulta)) {
+          setOcupacao(lista.map((r) => ({ salaId: r.salaId, ini: horaDeDT(r.inicio), fim: horaDeDT(r.fim) })))
+        }
+      })
+      .catch((erro) => {
+        if (ativa && consultaOcupacao.current.ehAtual(consulta) && erro?.name !== 'AbortError') {
+          setSelecao(null)
+          limparGestos()
+          setErroOcupacao(erro?.message || 'Nao foi possivel carregar a ocupacao das salas.')
+        }
+      })
+      .finally(() => {
+        if (ativa && consultaOcupacao.current.ehAtual(consulta)) setCarregandoOcupacao(false)
+      })
+
+    return () => {
+      ativa = false
+      controller.abort()
+    }
+  }, [data, token])
 
   useEffect(() => {
     const intervalo = window.setInterval(() => setAgora(new Date()), 60_000)
@@ -75,8 +143,7 @@ export default function Disponibilidade({ onAvancar, selecaoInicial }) {
     if (normalizada !== data) {
       setData(normalizada)
       setSelecao(null)
-      toqueInicial.current = null
-      toquePendente.current = null
+      limparGestos()
     }
   }, [agora, data])
 
@@ -90,7 +157,8 @@ export default function Disponibilidade({ onAvancar, selecaoInicial }) {
   }, [])
 
   const faixaAtual = FAIXAS.find((f) => f.valor === faixa)
-  const salasVisiveis = SALAS.filter((sala) => sala.capacidade >= faixaAtual.minimo)
+  const disponibilidadePronta = !carregandoSalas && !carregandoOcupacao && !erroSalas && !erroOcupacao
+  const salasVisiveis = salas.filter((sala) => sala.ativa !== false && !sala.desativada && !sala.indisponivel && sala.capacidade >= faixaAtual.minimo)
 
   function livre(salaId, hora) {
     return !motivoReservaIndisponivel(data, `${pad(hora)}:00`, `${pad(hora + 1)}:00`, agora)
@@ -98,6 +166,10 @@ export default function Disponibilidade({ onAvancar, selecaoInicial }) {
   }
 
   function aplicarToque(sala, hora) {
+    if (!disponibilidadePronta) {
+      limparGestos()
+      return
+    }
     const toque = toqueInicial.current
     if (toque?.salaId === sala.id) {
       const ini = Math.min(toque.hora, hora)
@@ -113,7 +185,7 @@ export default function Disponibilidade({ onAvancar, selecaoInicial }) {
   }
 
   function iniciarSelecao(sala, hora, tipoPonteiro, event) {
-    if (sala.emManutencao || !livre(sala.id, hora)) return
+    if (!disponibilidadePronta || sala.emManutencao || sala.desativada || sala.indisponivel || !livre(sala.id, hora)) return
     if (tipoPonteiro === 'touch') {
       toquePendente.current = { salaId: sala.id, hora, x: event.clientX, y: event.clientY, moveu: false }
       return
@@ -135,6 +207,10 @@ export default function Disponibilidade({ onAvancar, selecaoInicial }) {
   }
 
   function estenderSelecao(sala, hora) {
+    if (!disponibilidadePronta) {
+      limparGestos()
+      return
+    }
     const arraste = arrastando.current
     if (!arraste || arraste.salaId !== sala.id) return
     const ini = Math.min(arraste.origem, hora)
@@ -147,13 +223,12 @@ export default function Disponibilidade({ onAvancar, selecaoInicial }) {
     setSelecao({ salaId: sala.id, ini, fim })
   }
 
-  const salaSelecionada = selecao && SALAS.find((s) => s.id === selecao.salaId)
+  const salaSelecionada = selecao && salas.find((s) => s.id === selecao.salaId)
 
   function atualizarFaixa(valor) {
     setFaixa(valor)
     setSelecao(null)
-    toqueInicial.current = null
-    toquePendente.current = null
+    limparGestos()
   }
 
   function atualizarData(valor) {
@@ -162,8 +237,7 @@ export default function Disponibilidade({ onAvancar, selecaoInicial }) {
     if (normalizada === data) return
     setData(normalizada)
     setSelecao(null)
-    toqueInicial.current = null
-    toquePendente.current = null
+    limparGestos()
   }
 
   function avancar() {
@@ -236,6 +310,13 @@ export default function Disponibilidade({ onAvancar, selecaoInicial }) {
 
       {avisoData && <p id="disp-aviso-data" className="disp-aviso-data" role="status">{avisoData}</p>}
 
+      {(carregandoSalas || carregandoOcupacao) && (
+        <p className="disp-estado" role="status">Carregando disponibilidade...</p>
+      )}
+      {(erroSalas || erroOcupacao) && (
+        <p className="disp-estado disp-erro" role="alert">{erroSalas || erroOcupacao}</p>
+      )}
+
       <section className="disp-grade">
         <div className="grade-linha grade-cabecalho">
           <span />
@@ -258,7 +339,7 @@ export default function Disponibilidade({ onAvancar, selecaoInicial }) {
                 {sala.equipamentos?.length > 0 && <small>{sala.equipamentos.join(' e ')}</small>}
               </div>
 
-              <div className="linha-do-tempo" onPointerMove={acompanharToque} onPointerUp={finalizarToque} onPointerCancel={() => { toquePendente.current = null }}>
+              <div className="linha-do-tempo" onPointerMove={acompanharToque} onPointerUp={finalizarToque} onPointerCancel={limparGestos}>
                 <span className="dica-deslize">Deslize para ver outros horários →</span>
                 <div className="linha-do-tempo-conteudo">
                   <div className="trilha-cabecalho-mobile" aria-hidden="true">
@@ -269,7 +350,7 @@ export default function Disponibilidade({ onAvancar, selecaoInicial }) {
                       const motivo = motivoReservaIndisponivel(data, `${pad(h)}:00`, `${pad(h + 1)}:00`, agora)
                       const passada = motivo?.startsWith('O horário')
                       const foraFuncionamento = Boolean(motivo && !passada)
-                      const bloqueada = sala.emManutencao || passada || foraFuncionamento || !livre(sala.id, h)
+                      const bloqueada = !disponibilidadePronta || sala.emManutencao || sala.desativada || sala.indisponivel || passada || foraFuncionamento || !livre(sala.id, h)
                       return (
                         <div
                           key={h}
@@ -313,8 +394,8 @@ export default function Disponibilidade({ onAvancar, selecaoInicial }) {
           )
         })}
 
-        {salasVisiveis.length === 0 && (
-          <p className="grade-vazia">Nenhuma sala corresponde aos filtros selecionados.</p>
+        {salasVisiveis.length === 0 && !carregandoSalas && !erroSalas && (
+          <p className="grade-vazia">Nenhuma sala elegivel corresponde aos filtros selecionados.</p>
         )}
 
         <div className="legenda">
@@ -354,7 +435,7 @@ export default function Disponibilidade({ onAvancar, selecaoInicial }) {
             </li>
           </ul>
 
-          <button type="button" className="btn-primary" disabled={!onAvancar} onClick={avancar}>
+          <button type="button" className="btn-primary" disabled={!onAvancar || !disponibilidadePronta} onClick={avancar}>
             Reservar este horário →
           </button>
           <p className="nota">A disponibilidade é informativa; a reserva será validada definitivamente na confirmação.</p>

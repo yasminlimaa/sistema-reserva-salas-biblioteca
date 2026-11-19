@@ -122,8 +122,8 @@ export default function MenuLateral({ usuario, pagina, irPara, naoLidos, sair })
 
       <div className="menu-rodape">
         <span className="menu-avatar" aria-hidden="true">{iniciais}</span>
-        <div>
-          <strong>{usuario.nome || usuario.email}</strong>
+        <div className="menu-perfil">
+          <strong title={usuario.nome || usuario.email}>{usuario.nome || usuario.email}</strong>
           <small>{tipo}</small>
         </div>
       </div>

@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
-import { buscarDiscentes, criarReservaDemo } from '../services/reservas/index.js'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { criarControleDeConsulta } from '../services/disponibilidade/index.js'
+import { participantesProvider } from '../services/participantes/index.js'
 import { formatarData } from '../lib/datas.js'
 import './Participantes.css'
 
@@ -13,23 +14,61 @@ function participanteResponsavel(usuario) {
   }
 }
 
-export default function Participantes({ usuario, reserva, onVoltar, onConfirmar }) {
+function mensagemErroReserva(erro) {
+  if (erro?.status === 400) return 'Os dados da reserva sao invalidos. Revise o grupo e o horario.'
+  if (erro?.status === 401) return 'Sua sessao expirou ou e invalida. Entre novamente para continuar.'
+  if (erro?.status === 403) return 'Voce nao tem autorizacao para criar esta reserva.'
+  if (erro?.status === 409 || erro?.codigo === 'CONFLITO_HORARIO') return 'A sala ou um participante ja possui reserva nesse horario. Escolha outro horario ou grupo.'
+  if (erro?.status === 422) return 'A sala ou algum participante nao e mais valido para esta reserva.'
+  if (erro?.status === 503) return 'Um servico necessario esta indisponivel. Tente novamente em instantes.'
+  return erro?.message || 'Nao foi possivel confirmar a reserva.'
+}
+
+export default function Participantes({ usuario, reserva, token, onVoltar, onConfirmar }) {
   const responsavel = useMemo(() => participanteResponsavel(usuario), [usuario])
   const [participantes, setParticipantes] = useState([responsavel])
   const [termo, setTermo] = useState('')
   const [resultados, setResultados] = useState([])
   const [erro, setErro] = useState('')
+  const [erroBusca, setErroBusca] = useState('')
+  const [buscando, setBuscando] = useState(false)
   const [salvando, setSalvando] = useState(false)
+  const consultaBusca = useRef(criarControleDeConsulta())
+  const submissaoEmAndamento = useRef(false)
 
   useEffect(() => {
-    buscarDiscentes(termo).then(setResultados)
-  }, [termo])
+    const controller = new AbortController()
+    const consulta = consultaBusca.current.proxima()
+    let ativa = true
+    setBuscando(true)
+    setErroBusca('')
+
+    participantesProvider.buscarDiscentes({ token, termo, sinal: controller.signal })
+      .then((resposta) => {
+        if (!ativa || !consultaBusca.current.ehAtual(consulta)) return
+        setResultados(Array.isArray(resposta) ? resposta : resposta?.discentes ?? [])
+      })
+      .catch((err) => {
+        if (!ativa || !consultaBusca.current.ehAtual(consulta) || err?.name === 'AbortError') return
+        setResultados([])
+        setErroBusca(mensagemErroReserva(err))
+      })
+      .finally(() => {
+        if (ativa && consultaBusca.current.ehAtual(consulta)) setBuscando(false)
+      })
+
+    return () => {
+      ativa = false
+      controller.abort()
+    }
+  }, [termo, token])
 
   const capacidade = reserva.sala.capacidade
   const grupoCompleto = participantes.length >= 3 && participantes.length <= capacidade
   const resultadosVisiveis = resultados.filter((discente) => !participantes.some((item) => item.id === discente.id))
 
   function adicionar(discente) {
+    if (participantes.some((participante) => participante.id === discente.id)) return
     if (participantes.length >= capacidade) {
       setErro(`Esta sala comporta no máximo ${capacidade} pessoas.`)
       return
@@ -45,22 +84,22 @@ export default function Participantes({ usuario, reserva, onVoltar, onConfirmar 
   }
 
   async function confirmar() {
-    if (!grupoCompleto || salvando) return
+    if (!grupoCompleto || salvando || submissaoEmAndamento.current) return
+    submissaoEmAndamento.current = true
     setSalvando(true)
     setErro('')
     try {
-      const criada = await criarReservaDemo({
-        salaId: reserva.sala.id,
-        data: reserva.data,
-        inicio: reserva.inicio,
-        fim: reserva.fim,
+      const criada = await participantesProvider.criarReserva({
+        token,
+        reserva,
         participantes,
         responsavel: usuario,
       })
       onConfirmar(criada)
     } catch (err) {
-      setErro(err.message || 'Não foi possível confirmar a reserva de demonstração.')
+      setErro(mensagemErroReserva(err))
     } finally {
+      submissaoEmAndamento.current = false
       setSalvando(false)
     }
   }
@@ -121,6 +160,8 @@ export default function Participantes({ usuario, reserva, onVoltar, onConfirmar 
           />
         </div>
         <div className="resultados-busca">
+          {buscando && <p className="busca-vazia" role="status">Buscando discentes...</p>}
+          {erroBusca && <p className="erro-reserva" role="alert">{erroBusca}</p>}
           {resultadosVisiveis.map((discente) => (
             <div className="resultado-discente" key={discente.id}>
               <span className="participante-avatar">{iniciais(discente.nome)}</span>
@@ -131,7 +172,7 @@ export default function Participantes({ usuario, reserva, onVoltar, onConfirmar 
               <button type="button" className="botao-contorno" onClick={() => adicionar(discente)}>Adicionar</button>
             </div>
           ))}
-          {resultadosVisiveis.length === 0 && <p className="busca-vazia">Nenhum discente disponível para adicionar.</p>}
+          {!buscando && !erroBusca && resultadosVisiveis.length === 0 && <p className="busca-vazia">Nenhum discente disponível para adicionar.</p>}
         </div>
       </section>
 

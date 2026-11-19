@@ -24,6 +24,20 @@ Toda chamada de autenticação passa por `src/services/auth/`. O provedor é esc
 
 Para trocar de backend, basta mudar a variável. Os formulários não precisam mudar.
 
+### Preparação da integração de salas e reservas
+
+`src/services/api/` contém uma camada ainda **não conectada às telas**. Ela recebe o token Bearer em cada chamada (não o armazena), trata o formato de erro dos serviços e normaliza os nomes de campos para o formato atual do frontend.
+
+No desenvolvimento, as URLs relativas abaixo evitam CORS pelo proxy do Vite. Para outro ambiente, defina cada `VITE_*_API_URL` com a URL pública do respectivo serviço. Os destinos do proxy são configuráveis por `*_API_PROXY_TARGET` e só são usados pelo Vite.
+
+| Serviço | URL pública padrão | Destino local do proxy |
+|---|---|---|
+| Usuários | `VITE_USUARIOS_API_URL=/api/usuarios` | `USUARIOS_API_PROXY_TARGET=http://127.0.0.1:3003` |
+| Salas | `VITE_SALAS_API_URL=/api/salas` | `SALAS_API_PROXY_TARGET=http://127.0.0.1:3002` |
+| Reservas | `VITE_RESERVAS_API_URL=/api/reservas` | `RESERVAS_API_PROXY_TARGET=http://127.0.0.1:3001` |
+
+Datas que chegam do backend em ISO/UTC são convertidas para `America/Fortaleza`, sem usar o fuso configurado no computador. Para criar reservas, a camada converte a data e hora civil escolhidas na tela em ISO/UTC com o offset de Fortaleza.
+
 ### Contrato do backend (`src/services/auth/api.js`)
 
 Assumido até o backend ser definido. Ajustar o arquivo quando o contrato for fechado:

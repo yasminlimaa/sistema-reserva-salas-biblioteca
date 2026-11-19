@@ -123,7 +123,7 @@ export default function CadastroForm({ perfil = 'discente', onSuccess, onIrParaL
 
     setEnviando(true)
     try {
-      const { usuario, precisaConfirmarEmail } = await authService.cadastrar({
+      const sessao = await authService.cadastrar({
         perfil,
         nome: dados.nome.trim(),
         matricula: dados.matricula,
@@ -132,8 +132,8 @@ export default function CadastroForm({ perfil = 'discente', onSuccess, onIrParaL
         telefone: dados.telefone.replace(/\D/g, '') || null,
         senha: dados.senha,
       })
-      if (precisaConfirmarEmail) setConfirmacaoPendente(true)
-      else if (usuario) onSuccess(usuario)
+      if (sessao.precisaConfirmarEmail) setConfirmacaoPendente(true)
+      else if (sessao.usuario) onSuccess(sessao)
     } catch (err) {
       setErroGeral(err.message)
     } finally {

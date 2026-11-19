@@ -6,32 +6,29 @@
 //   GET  /matriculas/:numero                            -> { ativa, curso }
 //   POST /auth/logout                                   -> 204
 // Erros: resposta não-2xx com { mensagem } no corpo.
-const base = import.meta.env.VITE_API_URL || ''
+import { criarClienteHttp } from '../api/client.js'
+import { apiUrls } from '../api/config.js'
 
-async function chamar(caminho, { metodo = 'POST', corpo } = {}) {
-  let resposta
-  try {
-    resposta = await fetch(`${base}${caminho}`, {
-      method: metodo,
-      headers: corpo ? { 'Content-Type': 'application/json' } : {},
-      body: corpo ? JSON.stringify(corpo) : undefined,
-    })
-  } catch {
-    throw new Error('Não foi possível conectar ao servidor. Tente novamente.')
-  }
+const cliente = criarClienteHttp(apiUrls.usuarios)
 
-  const dados = await resposta.json().catch(() => ({}))
-  if (!resposta.ok) {
-    throw new Error(dados.mensagem || 'Não foi possível concluir a operação.')
+function validarRespostaDeSessao(resposta) {
+  if (!resposta?.usuario || typeof resposta.usuario !== 'object' || !resposta.usuario.id) {
+    throw new Error('O serviço de Usuários retornou uma sessão sem usuário válido.')
   }
-  return dados
+  if (typeof resposta.token !== 'string' || !resposta.token.trim()) {
+    throw new Error('O serviço de Usuários retornou uma sessão sem token válido.')
+  }
+  return resposta
 }
 
-export const login = (corpo) => chamar('/auth/login', { corpo })
+export async function login(corpo) {
+  return validarRespostaDeSessao(await cliente.post('/auth/login', corpo))
+}
 
-export const cadastrar = (corpo) => chamar('/auth/cadastro', { corpo })
+export async function cadastrar(corpo) {
+  return validarRespostaDeSessao(await cliente.post('/auth/cadastro', corpo))
+}
 
-export const buscarMatricula = (numero) =>
-  chamar(`/matriculas/${encodeURIComponent(numero)}`, { metodo: 'GET' })
+export const buscarMatricula = (numero) => cliente.get(`/matriculas/${encodeURIComponent(numero)}`)
 
-export const logout = () => chamar('/auth/logout')
+export const logout = (token) => cliente.post('/auth/logout', undefined, { token })
