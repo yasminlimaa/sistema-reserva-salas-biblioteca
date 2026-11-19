@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { formatarData, horaDe, situacaoReserva } from '../lib/datas.js'
 import Dialogo from '../components/Dialogo.jsx'
-import { cancelarReservaDemo, listarReservas } from '../services/reservas/index.js'
+import { minhasReservasProvider } from '../services/minhas-reservas/index.js'
 import './MinhasReservas.css'
 
 const ROTULOS = {
@@ -12,7 +12,7 @@ const ROTULOS = {
 
 function CartaoReserva({ reserva, usuario, onCancelar, cancelando }) {
   const situacao = situacaoReserva(reserva)
-  const podeCancelar = reserva.status === 'confirmada' && reserva.responsavelId === usuario.id
+  const podeCancelar = reserva.status === 'confirmada' && (reserva.responsavelId === usuario.id || usuario.perfil === 'funcionario')
 
   return (
     <article className="reserva-item">
@@ -39,19 +39,41 @@ function CartaoReserva({ reserva, usuario, onCancelar, cancelando }) {
   )
 }
 
-export default function MinhasReservas({ usuario }) {
+function mensagemErro(err) {
+  if (err?.status === 401) return 'Sua sessao expirou ou e invalida. Entre novamente.'
+  if (err?.status === 403) return 'Voce nao tem autorizacao para cancelar esta reserva.'
+  if (err?.status === 404) return 'Esta reserva nao foi encontrada.'
+  if (err?.status === 503) return 'Servico temporariamente indisponivel. Tente novamente.'
+  return err?.message || 'Nao foi possivel concluir a operacao.'
+}
+
+export default function MinhasReservas({ usuario, token }) {
   const [reservas, setReservas] = useState(null)
   const [mensagem, setMensagem] = useState('')
   const [erro, setErro] = useState('')
   const [cancelando, setCancelando] = useState(null)
   const [paraCancelar, setParaCancelar] = useState(null)
+  const consulta = useRef(0)
+  const cancelamentos = useRef(new Set())
 
-  const carregar = useCallback(async () => {
-    setReservas(await listarReservas(usuario.id))
-  }, [usuario.id])
+  const carregar = useCallback(async (sinal) => {
+    const atual = ++consulta.current
+    const lista = await minhasReservasProvider.listar({ usuario, token, sinal })
+    if (atual === consulta.current) setReservas(lista)
+  }, [usuario, token])
 
   useEffect(() => {
-    carregar().catch(() => setErro('Não foi possível carregar suas reservas de demonstração.'))
+    const controller = new AbortController()
+    let ativa = true
+    setReservas(null)
+    setErro('')
+    carregar(controller.signal).catch((err) => {
+      if (ativa && err?.name !== 'AbortError') setErro(mensagemErro(err))
+    })
+    return () => {
+      ativa = false
+      controller.abort()
+    }
   }, [carregar])
 
   const grupos = useMemo(() => {
@@ -64,16 +86,19 @@ export default function MinhasReservas({ usuario }) {
   }, [reservas])
 
   async function cancelar(reserva) {
+    if (cancelamentos.current.has(reserva.id)) return
+    cancelamentos.current.add(reserva.id)
     setCancelando(reserva.id)
     setMensagem('')
     setErro('')
     try {
-      await cancelarReservaDemo(reserva.id, usuario)
+      await minhasReservasProvider.cancelar({ token, reservaId: reserva.id, usuario })
       await carregar()
-      setMensagem('Reserva de demonstração local cancelada. O horário foi liberado.')
+      setMensagem(minhasReservasProvider.nome === 'mock' ? 'Reserva de demonstração local cancelada. O horário foi liberado.' : 'Reserva cancelada. O horário foi liberado.')
     } catch (err) {
-      setErro(err.message || 'Não foi possível cancelar a reserva.')
+      setErro(mensagemErro(err))
     } finally {
+      cancelamentos.current.delete(reserva.id)
       setCancelando(null)
     }
   }
@@ -103,7 +128,7 @@ export default function MinhasReservas({ usuario }) {
     <div className="minhas-reservas">
       <header className="minhas-reservas-cabecalho">
         <div>
-          <span>Modo de demonstração local</span>
+          <span>{minhasReservasProvider.nome === 'mock' ? 'Modo de demonstração local' : 'Reservas sincronizadas com a API'}</span>
           <h1>Minhas reservas</h1>
           <p>Acompanhe suas reservas e consulte o histórico.</p>
         </div>

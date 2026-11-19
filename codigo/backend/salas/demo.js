@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { ServiceError } from './domain.js';
 import { createReservasClient } from './reservas-client.js';
+import { createUsuariosClient } from './usuarios-client.js';
 
 // Adaptador de autenticação da demo local, compatível com os mesmos tokens de Reservas.
 // Identidades de usuários continuam fictícias até a integração com o serviço de Usuários.
@@ -72,6 +73,9 @@ export function createDemoAdapter(env = process.env, { fetchImpl } = {}) {
     fetchImpl,
     serviceToken: env.DEMO_TOKEN_FUNCIONARIO,
   });
+  const usuariosClient = env.USUARIOS_API_URL
+    ? createUsuariosClient(env.USUARIOS_API_URL, { fetchImpl })
+    : null;
 
   return {
     authenticate(header) {
@@ -82,6 +86,7 @@ export function createDemoAdapter(env = process.env, { fetchImpl } = {}) {
           if (token.length === supplied.length && timingSafeEqual(token, supplied)) return user;
         }
       }
+      if (usuariosClient) return usuariosClient.authenticate(header);
       throw new ServiceError(401, 'NAO_AUTENTICADO', 'Token de demonstração ausente ou inválido.');
     },
     checkAvailability: reservasClient.checkAvailability,

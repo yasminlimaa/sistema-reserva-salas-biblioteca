@@ -92,6 +92,16 @@
   font-size: 13px;
 }
 
+.disp-estado {
+  margin: -8px 0 0;
+  color: var(--texto-suave);
+  font-size: 13px;
+}
+
+.disp-erro {
+  color: #a1392b;
+}
+
 /* Grade de disponibilidade */
 
 .disp-grade {

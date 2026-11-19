@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import test from 'node:test';
 import { buildApp } from '../app.js';
 import { createDemoAdapter, initialRooms } from '../demo.js';
+import { createReservasClient } from '../reservas-client.js';
 import { buildApp as buildReservasApp } from '../../reservas/app.js';
 import { createDemoAdapter as createReservasDemoAdapter, students } from '../../reservas/demo.js';
 
@@ -14,6 +15,28 @@ const env = {
   DEMO_TOKEN_DISCENTE_D: 'd'.repeat(64),
   DEMO_TOKEN_FUNCIONARIO: 'f'.repeat(64),
 };
+
+test('cliente de Reservas preserva autenticação, autorização e erros de disponibilidade', async () => {
+  let authorization;
+  const disponivel = createReservasClient('http://reservas.local', { fetchImpl: async (_url, options) => {
+    authorization = options.headers.authorization;
+    return { status: 200, async json() { return { disponivel: true }; } };
+  } });
+  assert.equal((await disponivel.checkAvailability({ salaId: initialRooms[0].sala_id, inicio: '2070-01-01T15:00:00-03:00', fim: '2070-01-01T16:00:00-03:00', authorization: 'Bearer original' })).disponivel, true);
+  assert.equal(authorization, 'Bearer original');
+  for (const [status, expected] of [[401, 401], [403, 403], [400, 400], [422, 422], [503, 503]]) {
+    const client = createReservasClient('http://reservas.local', { fetchImpl: async () => ({ status, async json() { return status === 400 ? { codigo: 'INTERVALO_INVALIDO' } : {}; } }) });
+    await assert.rejects(() => client.checkAvailability({ salaId: initialRooms[0].sala_id, inicio: 'a', fim: 'b', authorization: 'Bearer token' }), { statusCode: expected });
+  }
+  for (const fetchImpl of [
+    async () => { throw new Error('ECONNREFUSED'); },
+    async () => { throw new DOMException('timeout', 'TimeoutError'); },
+    async () => ({ status: 200, async json() { return {}; } }),
+    async () => ({ status: 200, async json() { throw new Error('json'); } }),
+  ]) {
+    await assert.rejects(() => createReservasClient('http://reservas.local', { fetchImpl }).checkAvailability({ salaId: initialRooms[0].sala_id, inicio: 'a', fim: 'b', authorization: 'Bearer token' }), { statusCode: 503 });
+  }
+});
 
 // Simula o pool PostgreSQL em memória para testes unitários rápidos da API de Salas.
 function createMemoryPool(seed = []) {
@@ -109,6 +132,69 @@ function createMemoryPool(seed = []) {
 test('demo de Salas não pode ser ativada em produção ou com tokens repetidos', () => {
   assert.throws(() => createDemoAdapter({ ...env, NODE_ENV: 'production' }));
   assert.throws(() => createDemoAdapter({ ...env, DEMO_TOKEN_DISCENTE_D: env.DEMO_TOKEN_DISCENTE_A }));
+});
+
+test('Salas preserva tokens demonstrativos e autentica sessões reais por Usuários', async (t) => {
+  const directoryDemo = createDemoAdapter(env);
+  for (const [token, expected] of [
+    [env.DEMO_TOKEN_DISCENTE_A, 'discente'],
+    [env.DEMO_TOKEN_DISCENTE_D, 'discente'],
+    [env.DEMO_TOKEN_FUNCIONARIO, 'funcionario'],
+  ]) {
+    assert.equal((await directoryDemo.authenticate(`Bearer ${token}`)).perfil, expected);
+  }
+  assert.throws(() => directoryDemo.authenticate(), { statusCode: 401 });
+  assert.throws(() => directoryDemo.authenticate('Bearer desconhecido'), { statusCode: 401 });
+
+  let receivedAuthorization;
+  const identities = {
+    'Bearer real-discente': { id: '90000000-0000-4000-8000-000000000001', usuario_id: '90000000-0000-4000-8000-000000000001', perfil: 'discente', ativo: true },
+    'Bearer real-funcionario': { id: '90000000-0000-4000-8000-000000000099', usuario_id: '90000000-0000-4000-8000-000000000099', perfil: 'funcionario', ativo: true },
+  };
+  const remoteDirectory = createDemoAdapter(
+    { ...env, USUARIOS_API_URL: 'http://usuarios.local' },
+    { async fetchImpl(_url, options) {
+      receivedAuthorization = options.headers.authorization;
+      const identity = identities[receivedAuthorization];
+      return { status: identity ? 200 : 401, async json() { return identity; } };
+    } },
+  );
+  const discente = await remoteDirectory.authenticate('Bearer real-discente');
+  const funcionario = await remoteDirectory.authenticate('Bearer real-funcionario');
+  assert.deepEqual(discente, { id: identities['Bearer real-discente'].id, usuario_id: identities['Bearer real-discente'].id, perfil: 'discente', ativo: true });
+  assert.equal(funcionario.perfil, 'funcionario');
+  assert.equal(receivedAuthorization, 'Bearer real-funcionario');
+  await assert.rejects(() => remoteDirectory.authenticate('Bearer invalido'), { statusCode: 401 });
+
+  const app = buildApp({ pool: createMemoryPool(), directory: remoteDirectory });
+  t.after(() => app.close());
+  const payload = { nome: 'Sala autenticada', capacidade: 6 };
+  const discenteWrite = await app.inject({ method: 'POST', url: '/salas', headers: { authorization: 'Bearer real-discente' }, payload });
+  assert.equal(discenteWrite.statusCode, 403);
+  const funcionarioWrite = await app.inject({ method: 'POST', url: '/salas', headers: { authorization: 'Bearer real-funcionario' }, payload });
+  assert.equal(funcionarioWrite.statusCode, 201);
+});
+
+test('Salas rejeita ou falha de forma segura quando Usuários não autentica', async () => {
+  const makeDirectory = (fetchImpl) => createDemoAdapter(
+    { ...env, USUARIOS_API_URL: 'http://usuarios.local' }, { fetchImpl },
+  );
+  await assert.rejects(
+    () => makeDirectory(async () => { throw new Error('ECONNREFUSED'); }).authenticate('Bearer real'),
+    { statusCode: 503 },
+  );
+  await assert.rejects(
+    () => makeDirectory(async () => { throw new DOMException('timeout', 'TimeoutError'); }).authenticate('Bearer real'),
+    { statusCode: 503 },
+  );
+  await assert.rejects(
+    () => makeDirectory(async () => ({ status: 200, async json() { return { id: 'forjado', perfil: 'discente', ativo: true }; } })).authenticate('Bearer real'),
+    { statusCode: 503 },
+  );
+  await assert.rejects(
+    () => makeDirectory(async () => ({ status: 200, async json() { throw new Error('JSON inválido'); } })).authenticate('Bearer real'),
+    { statusCode: 503 },
+  );
 });
 
 test('API de Salas valida autorização e parâmetros de entrada antes de tocar no banco', async (t) => {

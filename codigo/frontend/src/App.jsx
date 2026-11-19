@@ -14,7 +14,10 @@ import GestaoReservas from './pages/GestaoReservas.jsx'
 
 export default function App() {
   const [tela, setTela] = useState('login')
-  const [usuario, setUsuario] = useState(null)
+  // A sessão existe apenas enquanto a aplicação está aberta. Não persistimos o token no navegador.
+  const [sessao, setSessao] = useState(null)
+  const usuario = sessao?.usuario ?? null
+  const token = sessao?.token ?? null
   const [perfilCadastro, setPerfilCadastro] = useState('discente')
   const [pagina, setPagina] = useState('inicio')
   const [naoLidos, setNaoLidos] = useState(0)
@@ -26,13 +29,21 @@ export default function App() {
     contarAvisosNaoLidos(usuario.id).then(setNaoLidos)
   }, [usuario, pagina])
 
+  function iniciarSessao(resultado) {
+    if (!resultado?.usuario) throw new Error('Não foi possível iniciar uma sessão sem usuário.')
+    setSessao({
+      usuario: resultado.usuario,
+      token: typeof resultado.token === 'string' && resultado.token.trim() ? resultado.token : null,
+    })
+  }
+
   async function sair() {
     try {
-      await authService.logout()
+      await authService.logout(token)
     } catch (err) {
       console.error(err)
     } finally {
-      setUsuario(null)
+      setSessao(null)
       setTela('login')
       setPagina('inicio')
       setRascunhoReserva(null)
@@ -53,6 +64,7 @@ export default function App() {
         <main className="layout-conteudo">
           {pagina === 'disponibilidade' && (
             <Disponibilidade
+              token={token}
               selecaoInicial={rascunhoReserva}
               onAvancar={(selecao) => {
                 setRascunhoReserva(selecao)
@@ -64,6 +76,7 @@ export default function App() {
           {pagina === 'participantes' && rascunhoReserva && (
             <Participantes
               usuario={usuario}
+              token={token}
               reserva={rascunhoReserva}
               onVoltar={() => setPagina('disponibilidade')}
               onConfirmar={() => {
@@ -74,7 +87,7 @@ export default function App() {
             />
           )}
 
-          {pagina === 'minhas' && <MinhasReservas usuario={usuario} irPara={setPagina} />}
+          {pagina === 'minhas' && <MinhasReservas usuario={usuario} token={token} irPara={setPagina} />}
 
           {/* Renderiza o Serviço de Chaves */}
           {pagina === 'chaves' && <ServicoChaves usuario={usuario} />}
@@ -105,7 +118,7 @@ export default function App() {
     return (
       <CadastroForm
         perfil={perfilCadastro}
-        onSuccess={setUsuario}
+        onSuccess={iniciarSessao}
         onIrParaLogin={() => setTela('login')}
       />
     )
@@ -113,7 +126,7 @@ export default function App() {
 
   return (
     <LoginForm
-      onSuccess={setUsuario}
+      onSuccess={iniciarSessao}
       onIrParaCadastro={(perfil) => {
         setPerfilCadastro(perfil)
         setTela('cadastro')
